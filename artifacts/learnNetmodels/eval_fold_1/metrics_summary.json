@@ -1,0 +1,38 @@
+{
+  "accuracy": 0.43137254901960786,
+  "macro": {
+    "precision": 0.16695652173913045,
+    "recall": 0.2704761904761905,
+    "f1": 0.19940298507462687
+  },
+  "micro": {
+    "precision": 0.43137254901960786,
+    "recall": 0.43137254901960786,
+    "f1": 0.43137254901960786
+  },
+  "weighted": {
+    "precision": 0.21824381926683717,
+    "recall": 0.43137254901960786,
+    "f1": 0.28504536142815334
+  },
+  "classes": [
+    "disgust",
+    "happiness",
+    "others",
+    "repression",
+    "surprise"
+  ],
+  "n_valid": 51,
+  "config": {
+    "valid_csv": "./artifacts/casme_split/fold_1/valid.csv",
+    "images_dir": "/media/hmi/Transcend1/CASMEV2/dynamic_images/",
+    "checkpoint": "/mnt/hmi/thuong/rivf2025_mer/artifacts/learnNetmodels/checkpoints/best_0.4314.pth",
+    "outdir": "./artifacts/learnNetmodels/eval_fold_1",
+    "grayscale": false,
+    "input_size": 112,
+    "batch_size": 64,
+    "num_workers": 4,
+    "seed": 42
+  },
+  "checkpoint": "/mnt/hmi/thuong/rivf2025_mer/artifacts/learnNetmodels/checkpoints/best_0.4314.pth"
+}
