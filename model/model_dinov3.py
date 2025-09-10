@@ -1,30 +1,27 @@
 # model.py
+import torch
 import torch.nn as nn
-from transformers import AutoModel
+from transformers import AutoModelForImageClassification
 
 class SigLIPClassifier(nn.Module):
-    def __init__(self, num_classes: int, ckpt: str = "google/siglip2-base-patch16-224", device_map="auto"):
+    def __init__(self, num_classes: int, ckpt: str = "google/siglip-base-patch16-224"):
         super().__init__()
-        # Backbone SigLIP
-        self.backbone = AutoModel.from_pretrained(ckpt, device_map=device_map)
+        # Load model pretrained
+        self.model = AutoModelForImageClassification.from_pretrained(ckpt)
         
-        # Lấy hidden size của backbone (thường là 768)
-        hidden_size = self.backbone.config.hidden_size
+        # Lấy số features của classifier hiện tại
+        in_features = self.model.classifier.in_features
         
-        # Classifier head
-        self.classifier = nn.Linear(hidden_size, num_classes)
+        # Thay classifier head nếu số class khác pretrained
+        if num_classes != self.model.config.num_labels:
+            self.model.classifier = nn.Linear(in_features, num_classes)
 
     def forward(self, pixel_values):
-        # Lấy output từ backbone
-        outputs = self.backbone(pixel_values=pixel_values)
-        
-        # Lấy CLS token (vị trí 0)
-        pooled = outputs.last_hidden_state[:, 0]
-        
-        # Đưa qua classifier
-        return self.classifier(pooled)
+        """
+        pixel_values: Tensor [B, C, H, W], đã chuẩn hóa
+        """
+        outputs = self.model(pixel_values=pixel_values)
+        return outputs.logits
 
-
-def build_model(num_classes: int, pretrained: bool = True):
-    model = SigLIPClassifier(num_classes=num_classes)
-    return model
+def build_model(num_classes: int, ckpt: str = "google/siglip-base-patch16-224"):
+    return SigLIPClassifier(num_classes=num_classes, ckpt=ckpt)
