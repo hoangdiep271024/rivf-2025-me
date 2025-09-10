@@ -4,46 +4,48 @@ from transformers import AutoModel
 
 
 # CNN classifier của bạn
+import torch
+import torch.nn as nn
+
 class Moderu_cnn(nn.Module):
     def __init__(self, in_channels=3, num_classes=5):
         super().__init__()
 
         self.conv1 = nn.Sequential(
-            nn.Conv2d(in_channels, 8, kernel_size=3, stride=1, padding="same"),
+            nn.Conv2d(in_channels, 32, 3, 1, padding="same"),
+            nn.BatchNorm2d(32),
             nn.ReLU(),
             nn.MaxPool2d(2)
         )
         self.conv2 = nn.Sequential(
-            nn.Conv2d(8, 16, kernel_size=3, stride=1, padding="same"),
+            nn.Conv2d(32, 64, 3, 1, padding="same"),
+            nn.BatchNorm2d(64),
             nn.ReLU(),
             nn.MaxPool2d(2)
         )
         self.conv3 = nn.Sequential(
-            nn.Conv2d(16, 32, kernel_size=3, stride=1, padding="same"),
+            nn.Conv2d(64, 128, 3, 1, padding="same"),
+            nn.BatchNorm2d(128),
             nn.ReLU(),
             nn.MaxPool2d(2)
         )
         self.conv4 = nn.Sequential(
-            nn.Conv2d(32, 64, kernel_size=3, stride=1, padding="same"),
+            nn.Conv2d(128, 256, 3, 1, padding="same"),
+            nn.BatchNorm2d(256),
             nn.ReLU(),
             nn.MaxPool2d(2)
         )
 
-        # bỏ conv5, thay bằng AdaptiveAvgPool2d để giữ kích thước ổn định
-        self.avgpool = nn.AdaptiveAvgPool2d((7, 7))
+        # Global Average Pooling
+        self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
         self.flatten = nn.Flatten()
 
         self.fc1 = nn.Sequential(
-            nn.Dropout(0.5),
-            nn.Linear(64 * 7 * 7, 1024),
+            nn.Dropout(0.3),
+            nn.Linear(256, 256),
             nn.ReLU()
         )
-        self.fc2 = nn.Sequential(
-            nn.Dropout(0.5),
-            nn.Linear(1024, 256),
-            nn.ReLU()
-        )
-        self.fc3 = nn.Linear(256, num_classes)
+        self.fc2 = nn.Linear(256, num_classes)
 
     def forward(self, x):
         x = self.conv1(x)  
@@ -54,8 +56,8 @@ class Moderu_cnn(nn.Module):
         x = self.flatten(x)
         x = self.fc1(x)
         x = self.fc2(x)
-        x = self.fc3(x)
         return x
+
 
 
 
