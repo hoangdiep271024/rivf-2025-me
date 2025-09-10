@@ -244,10 +244,6 @@ def main(cfg: Config):
         # Save best + last
         if va_acc >= best_acc:
             best_acc = va_acc
-            best_path = outdir / f"best_{best_acc:.4f}.pth"
-            torch.save({"model": model.state_dict(),
-                        "classes": class_names,
-                        "config": asdict(cfg)}, best_path)
             torch.save({"model": model.state_dict(),
                     "classes": class_names,
                     "config": asdict(cfg)}, outdir / "best_last.pth")
