@@ -90,7 +90,7 @@ class RadioWithCNN(nn.Module):
         if freeze_backbone:
             for param in self.backbone.parameters():
                 param.requires_grad = False
-
+        self.backbone.eval()
         self.cnn_classifier = ModeruCNN(
             in_channels=hidden_size,
             num_classes=num_classes,
