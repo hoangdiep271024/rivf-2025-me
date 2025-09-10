@@ -1,133 +1,90 @@
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 from transformers import AutoModel
 
-# ========================
-# Attention Pooling Module
-# ========================
-class AttnPool(nn.Module):
-    def __init__(
-        self,
-        in_dim: int,
-        n_queries: int,
-        output_dim: int,
-        dropout: float = 0.3,
-    ):
-        """
-        Args:
-            in_dim (int): Input feature dim (must be multiple of 64).
-            n_queries (int): Number of learnable queries.
-            output_dim (int): Output dimension after pooling.
-            dropout (float): Dropout prob.
-        """
+
+# CNN classifier của bạn
+class Moderu_cnn(nn.Module):
+    def __init__(self, in_channels=3, num_classes=5):
         super().__init__()
-        assert in_dim % 64 == 0, "in_dim must be multiple of 64"
 
-        self.n_q = n_queries
-        self.num_heads = in_dim // 64
-
-        # Learnable queries
-        self.query = nn.Parameter(torch.empty(n_queries, in_dim))
-
-        # Projections
-        self.kv   = nn.Linear(in_dim, in_dim * 2)   # keys, values
-        self.proj = nn.Linear(in_dim, output_dim)   # to fixed output dim
-
-        # Norm + dropouts
-        self.norm          = nn.LayerNorm(output_dim)
-        self.attn_dropout  = dropout
-        self.dropout       = nn.Dropout(dropout)
-        self.query_dropout = nn.Dropout(dropout)
-
-        self._init_weights()
-
-    def _init_weights(self):
-        nn.init.orthogonal_(self.query)
-        nn.init.trunc_normal_(self.kv.weight, std=0.02)
-        nn.init.zeros_(self.kv.bias)
-        nn.init.trunc_normal_(self.proj.weight, std=0.02)
-        nn.init.zeros_(self.proj.bias)
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """
-        Args:
-            x: [B, N, D] (patch embeddings từ DINO)
-        Returns:
-            [B, output_dim]
-        """
-        B, N, D = x.shape
-        H = self.num_heads
-        Dh = D // H
-
-        # Expand queries: [n_q, D] -> [B, n_q, D] -> [B, H, n_q, Dh]
-        q = self.query.unsqueeze(0).expand(B, -1, -1)
-        q = self.query_dropout(q)
-        q = q.reshape(B, self.n_q, H, Dh).permute(0, 2, 1, 3)
-
-        # Keys/values: [B, N, D] -> [2, B, H, N, Dh]
-        kv = self.kv(x).reshape(B, N, 2, H, Dh).permute(2, 0, 3, 1, 4)
-        k, v = kv.unbind(0)
-
-        # Attention pooling
-        attn = F.scaled_dot_product_attention(q, k, v, dropout_p=self.attn_dropout)
-
-        # [B, H, n_q, Dh] -> [B, n_q, D]
-        attn = attn.permute(0, 2, 1, 3).reshape(B, self.n_q, D)
-        attn = self.dropout(attn)
-
-        # Project and average queries: [B, n_q, D] -> [B, output_dim]
-        pooled = self.proj(attn).mean(dim=1)
-        return self.norm(pooled)
-
-# ========================
-# Final Classifier with DINO
-# ========================
-class DinoAttnClassifier(nn.Module):
-    def __init__(
-        self,
-        num_classes: int,
-        n_queries: int = 4,
-        dropout: float = 0.3,
-        pretrained_model_name: str = "facebook/dinov3-vitb16-pretrain-lvd1689m"
-    ):
-        super().__init__()
-        self.backbone = AutoModel.from_pretrained(pretrained_model_name)
-        d_model = self.backbone.config.hidden_size
-
-        # Attention pooling
-        self.pool = AttnPool(d_model, n_queries, d_model, dropout)
-
-        # Head classifier
-        self.head = nn.Sequential(
-            nn.Linear(d_model, 512),
-            nn.LayerNorm(512),
-            nn.GELU(),
-            nn.Dropout(p=dropout),
-            nn.Linear(512, num_classes),
+        self.conv1 = nn.Sequential(
+            nn.Conv2d(in_channels, 8, kernel_size=3, stride=1, padding="same"),
+            nn.ReLU(),
+            nn.MaxPool2d(2)
+        )
+        self.conv2 = nn.Sequential(
+            nn.Conv2d(8, 16, kernel_size=3, stride=1, padding="same"),
+            nn.ReLU(),
+            nn.MaxPool2d(2)
+        )
+        self.conv3 = nn.Sequential(
+            nn.Conv2d(16, 32, kernel_size=3, stride=1, padding="same"),
+            nn.ReLU(),
+            nn.MaxPool2d(2)
+        )
+        self.conv4 = nn.Sequential(
+            nn.Conv2d(32, 64, kernel_size=3, stride=1, padding="same"),
+            nn.ReLU(),
+            nn.MaxPool2d(2)
         )
 
-        # Init head
-        for m in self.head:
-            if isinstance(m, nn.Linear):
-                nn.init.xavier_uniform_(m.weight)
-                nn.init.zeros_(m.bias)
+        # bỏ conv5, thay bằng AdaptiveAvgPool2d để giữ kích thước ổn định
+        self.avgpool = nn.AdaptiveAvgPool2d((7, 7))
+        self.flatten = nn.Flatten()
 
-    def forward(self, pixel_values: torch.Tensor) -> torch.Tensor:
-        # Extract patch features
+        self.fc1 = nn.Sequential(
+            nn.Dropout(0.5),
+            nn.Linear(64 * 7 * 7, 1024),
+            nn.ReLU()
+        )
+        self.fc2 = nn.Sequential(
+            nn.Dropout(0.5),
+            nn.Linear(1024, 256),
+            nn.ReLU()
+        )
+        self.fc3 = nn.Linear(256, num_classes)
+
+    def forward(self, x):
+        x = self.conv1(x)  
+        x = self.conv2(x)  
+        x = self.conv3(x) 
+        x = self.conv4(x) 
+        x = self.avgpool(x)  
+        x = self.flatten(x)
+        x = self.fc1(x)
+        x = self.fc2(x)
+        x = self.fc3(x)
+        return x
+
+
+
+# Ghép DINOv3 backbone + CNN classifier
+class DinoWithCNN(nn.Module):
+    def __init__(self, num_classes: int, pretrained_model_name: str = "facebook/dinov3-vitb16-pretrain-lvd1689m"):
+        super().__init__()
+        self.backbone = AutoModel.from_pretrained(pretrained_model_name)
+        for param in self.backbone.parameters():
+            param.requires_grad = False
+        self.backbone.eval()
+        hidden_size = self.backbone.config.hidden_size  # thường = 768
+        assert hidden_size == 768, f"Hiện code chỉ support hidden_size=768, nhưng model backbone trả về {hidden_size}"
+        self.reshape_dims = (3, 16, 16)
+        assert torch.prod(torch.tensor(self.reshape_dims)) == hidden_size
+
+        # CNN classifier
+        self.cnn_classifier = Moderu_cnn(in_channels=3, num_classes=num_classes)
+
+    def forward(self, pixel_values):
         outputs = self.backbone(pixel_values=pixel_values)
-        last_hidden = outputs.last_hidden_state  # [B, N, D]
+        cls_feature = outputs.last_hidden_state[:, 0]  # (B, 768)
 
-        # Bỏ CLS token (patches only)
-        patch_tokens = last_hidden[:, 1:, :]  # [B, N-1, D]
+        # reshape -> (B, 3, 16, 16)
+        x = cls_feature.view(cls_feature.size(0), *self.reshape_dims)
 
-        # Attn pooling
-        pooled = self.pool(patch_tokens)
-
-        # Classification
-        logits = self.head(pooled)
+        logits = self.cnn_classifier(x)
         return logits
 
 
 def build_model(num_classes: int):
-    return DinoAttnClassifier(num_classes=num_classes)
+    return DinoWithCNN(num_classes=num_classes)
