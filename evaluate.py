@@ -234,7 +234,7 @@ if __name__ == "__main__":
     for fold in range(1, 6):
         cfg = Config(
             valid_csv=f"./artifacts/casme_split/fold_{fold}/valid.csv",
-            images_dir="/workspace/rivf-2025-me/media/CASMEV2/dynamic_images",
+            images_dir="./media/CASMEV2/dynamic_images",
             checkpoint=f"./artifacts/learnNetmodels/checkpoints/fold_{fold}/best_last.pth",
             outdir=f"./artifacts/learnNetmodels/eval_fold_{fold}",
             grayscale=False,      # RGB default
