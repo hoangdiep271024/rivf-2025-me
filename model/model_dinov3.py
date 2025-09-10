@@ -1,27 +1,19 @@
 # model.py
 import torch
 import torch.nn as nn
-from transformers import AutoModelForImageClassification
+from transformers import AutoModel
 
-class SigLIPClassifier(nn.Module):
-    def __init__(self, num_classes: int, ckpt: str = "google/siglip-base-patch16-224"):
+class DinoV3Classifier(nn.Module):
+    def __init__(self, num_classes: int, pretrained_model_name: str = "facebook/dinov3-vit7b16-pretrain-lvd1689m"):
         super().__init__()
-        # Load model pretrained
-        self.model = AutoModelForImageClassification.from_pretrained(ckpt)
-        
-        # Lấy số features của classifier hiện tại
-        in_features = self.model.classifier.in_features
-        
-        # Thay classifier head nếu số class khác pretrained
-        if num_classes != self.model.config.num_labels:
-            self.model.classifier = nn.Linear(in_features, num_classes)
+        self.backbone = AutoModel.from_pretrained(pretrained_model_name)
+        self.classifier = nn.Linear(self.backbone.config.hidden_size, num_classes)
 
     def forward(self, pixel_values):
-        """
-        pixel_values: Tensor [B, C, H, W], đã chuẩn hóa
-        """
-        outputs = self.model(pixel_values=pixel_values)
-        return outputs.logits
+        outputs = self.backbone(pixel_values=pixel_values)
+        cls_feature = outputs.last_hidden_state[:, 0]
+        logits = self.classifier(cls_feature)
+        return logits
 
-def build_model(num_classes: int, ckpt: str = "google/siglip-base-patch16-224"):
-    return SigLIPClassifier(num_classes=num_classes, ckpt=ckpt)
+def build_model(num_classes: int):
+    return DinoV3Classifier(num_classes=num_classes)
