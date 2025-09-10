@@ -15,7 +15,7 @@ from sklearn.metrics import (
     precision_recall_fscore_support,
 )
 
-from model import LEARNet
+from model.model_convnext import build_model
 # We’ll import your dataset + transforms so we can inject the checkpoint's LabelEncoder
 from data import CASMECSVDataset, build_transforms
 
@@ -151,7 +151,7 @@ def run_eval(cfg: Config):
     num_classes = len(classes)
 
     # 2) Build model and load weights
-    model = LEARNet(num_classes=num_classes).to(device)
+    model = build_model(num_classes=num_classes).to(device)
     model.load_state_dict(ckpt["model"], strict=True)
     model.eval()
 
@@ -205,12 +205,15 @@ def run_eval(cfg: Config):
         .to_csv(outdir / "confusion_matrix.csv", index=True)
     pd.DataFrame(report).to_csv(outdir / "classification_report.csv")
     # JSON summary
+    acc_per_class = cm.diagonal() / cm.sum(axis=1)
+    acc_dict = {cls: float(acc_per_class[i]) for i, cls in enumerate(classes)}
     summary = {
         "accuracy": acc,
         "macro": {"precision": p_macro, "recall": r_macro, "f1": f1_macro},
         "micro": {"precision": p_micro, "recall": r_micro, "f1": f1_micro},
         "weighted": {"precision": p_weight, "recall": r_weight, "f1": f1_weight},
         "classes": classes,
+        "class_accuracy": acc_dict,
         "n_valid": int(len(y_true)),
         "config": asdict(cfg),
         "checkpoint": str(cfg.checkpoint),
@@ -228,15 +231,17 @@ def run_eval(cfg: Config):
 
 # -------------------- Run --------------------
 if __name__ == "__main__":
-    cfg = Config(
-        valid_csv="./artifacts/casme_split/fold_1/valid.csv",
-        images_dir="/media/hmi/Transcend1/CASMEV2/dynamic_images/",
-        checkpoint="/mnt/hmi/thuong/rivf2025_mer/artifacts/learnNetmodels/checkpoints/best_0.4314.pth",
-        outdir="./artifacts/learnNetmodels/eval_fold_1",
-        grayscale=False,      # RGB default
-        input_size=112,
-        batch_size=64,
-        num_workers=4,
-        seed=42,
-    )
-    run_eval(cfg)
+    for fold in range(1, 6):
+        cfg = Config(
+            valid_csv=f"./artifacts/casme_split/fold_{fold}/valid.csv",
+            images_dir="/workspace/rivf-2025-me/media/CASMEV2/dynamic_images",
+            checkpoint=f"./artifacts/learnNetmodels/checkpoints/fold_{fold}/best_last.pth",
+            outdir=f"./artifacts/learnNetmodels/eval_fold_{fold}",
+            grayscale=False,      # RGB default
+            input_size=224,
+            batch_size=32,
+            num_workers=4,
+            seed=42,
+        )
+        print(f"=== Running eval for fold {fold} ===")
+        run_eval(cfg)
