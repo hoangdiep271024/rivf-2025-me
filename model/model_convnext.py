@@ -41,7 +41,7 @@ class ConvNeXtPlusModeru(nn.Module):
             "convnextv2_atto.fcmae_ft_in1k",
             pretrained=pretrained,
             num_classes=0  # output vector
-        )
+        ).eval()
         self.classifier = ModeruFC(self.backbone.num_features, num_classes=num_classes)
 
     def forward(self, x):
