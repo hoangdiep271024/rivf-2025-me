@@ -4,26 +4,11 @@ import torch.nn as nn
 
 MODEL_NAME = "convnextv2_base.fcmae_ft_in1k"
 
-class ConvNextWrapper(nn.Module):
-    def __init__(self, num_classes: int, hidden_dim: int = 1024, dropout: float = 0.3, pretrained: bool = True):
-        super().__init__()
-        # Load pretrained ConvNeXtV2
-        self.model = timm.create_model(MODEL_NAME, pretrained=pretrained)
-        
-        # Lấy số chiều input của classifier gốc
-        in_features = self.model.get_classifier().in_features
-        
-        # Reset classifier mạnh hơn: Linear -> ReLU -> Dropout -> Linear
-        self.model.reset_classifier(0)  # xóa classifier gốc
-        self.model.classifier = nn.Sequential(
-            nn.Linear(in_features, hidden_dim),
-            nn.ReLU(),
-            nn.Dropout(dropout),
-            nn.Linear(hidden_dim, num_classes)
-        )
-
-    def forward(self, x):
-        return self.model(x)  # trả về logits trực tiếp
-
 def build_model(num_classes: int):
-    return ConvNextWrapper(num_classes)
+    # Load pretrained ConvNeXtV2
+    model = timm.create_model(MODEL_NAME, pretrained=True)
+    
+    # Reset classifier về đúng số lớp, 1 Linear cuối cùng
+    model.reset_classifier(num_classes)
+    
+    return model
