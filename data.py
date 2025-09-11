@@ -19,13 +19,25 @@ def _extract_seq_number(seq: str) -> int:
         raise ValueError(f"Cannot parse sequence number from: {seq}")
     return int(m.group(1))
 
-def _resolve_path(num: int, images_dir: Path) -> Optional[Path]:
-    for p in [
-        images_dir / f"Seq_{num}.jpg",
-        images_dir / f"Seq{num}.jpg",
-        images_dir / f"Seq_{num:03d}.jpg",
-    ]:
-        if p.exists(): return p
+# def _resolve_path(num: int, images_dir: Path) -> Optional[Path]:
+#     for p in [
+#         images_dir / f"Seq_{num}.jpg",
+#         images_dir / f"Seq{num}.jpg",
+#         images_dir / f"Seq_{num:03d}.jpg",
+#     ]:
+#         if p.exists(): return p
+#     return None
+def _resolve_path(seq_id: int, frame_num: int, images_dir: Path) -> Optional[Path]:
+    """
+    Tìm ảnh theo format: Seq_<seq_id>_<frame_num:02d>.jpg
+    """
+    candidates = [
+        images_dir / f"Seq_{seq_id}_{frame_num:02d}.jpg",  # Seq_1_01.jpg
+        images_dir / f"Seq_{seq_id}_{frame_num}.jpg",      # fallback nếu không có padding
+    ]
+    for p in candidates:
+        if p.exists():
+            return p
     return None
 
 def compute_class_weights(y: np.ndarray, scheme: str = "inv_freq") -> torch.Tensor:
