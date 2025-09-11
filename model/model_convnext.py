@@ -2,18 +2,25 @@
 from transformers import ConvNextForImageClassification
 import torch.nn as nn
 
-MODEL_NAME = "facebook/convnext-large-224-22k-1k"
+MODEL_NAME = "convnextv2_base.fcmae_ft_in22k_in1k"
 
 class ConvNextWrapper(nn.Module):
-    def __init__(self, num_classes: int):
+    def __init__(self, num_classes: int, hidden_dim: int = 1024, dropout: float = 0.3):
         super().__init__()
         self.model = ConvNextForImageClassification.from_pretrained(MODEL_NAME)
-        # Reset classifier
-        self.model.classifier = nn.Linear(self.model.classifier.in_features, num_classes)
+        in_features = self.model.classifier.in_features
+        
+        # Mạnh hơn: thêm 1 hidden layer với ReLU + Dropout
+        self.model.classifier = nn.Sequential(
+            nn.Linear(in_features, hidden_dim),
+            nn.ReLU(),
+            nn.Dropout(dropout),
+            nn.Linear(hidden_dim, num_classes)
+        )
 
     def forward(self, x):
-        # Trả về logits trực tiếp để train_one_epoch không cần sửa
-        return self.model(x).logits
+        # Trả về logits trực tiếp
+        return self.model(x)
 
 def build_model(num_classes: int):
     return ConvNextWrapper(num_classes)
