@@ -2,7 +2,7 @@
 import timm
 import torch.nn as nn
 
-MODEL_NAME = "convnextv2_base.fcmae_ft_in1k"
+MODEL_NAME = "convnextv2_tiny.fcmae_ft_in22k_in1k"
 
 def build_model(num_classes: int):
     # Load pretrained ConvNeXtV2
