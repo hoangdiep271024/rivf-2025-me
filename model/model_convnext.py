@@ -1,6 +1,5 @@
 # model_convnext.py
 import timm
-import torch
 import torch.nn as nn
 
 MODEL_NAME = "convnextv2_base.fcmae_ft_in1k"
@@ -14,7 +13,7 @@ class ConvNextWrapper(nn.Module):
         # Lấy số chiều input của classifier gốc
         in_features = self.model.get_classifier().in_features
         
-        # Reset classifier: Linear -> ReLU -> Dropout -> Linear
+        # Reset classifier mạnh hơn: Linear -> ReLU -> Dropout -> Linear
         self.model.reset_classifier(0)  # xóa classifier gốc
         self.model.classifier = nn.Sequential(
             nn.Linear(in_features, hidden_dim),
@@ -22,19 +21,9 @@ class ConvNextWrapper(nn.Module):
             nn.Dropout(dropout),
             nn.Linear(hidden_dim, num_classes)
         )
-        
-        # Tạo criterion mới với số lớp phù hợp
-        self.criterion = nn.CrossEntropyLoss()  # Nếu muốn weighted, tạo weight size=[num_classes]
 
     def forward(self, x):
         return self.model(x)  # trả về logits trực tiếp
 
-    def get_criterion(self):
-        return self.criterion
-
 def build_model(num_classes: int):
-    """
-    Trả về model và criterion, sẵn sàng train
-    """
-    model_wrapper = ConvNextWrapper(num_classes)
-    return model_wrapper, model_wrapper.get_criterion()
+    return ConvNextWrapper(num_classes)
