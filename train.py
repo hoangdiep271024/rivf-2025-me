@@ -20,8 +20,8 @@ from model.model_efficientnet import build_model
 @dataclass
 class Config:
     # paths
-    train_csv: str = "./artifacts/casme_split/fold_1/train.csv"
-    valid_csv: str = "./artifacts/casme_split/fold_1/valid.csv"
+    train_csv: str = "./artifacts/casme_split_new/fold_1/train.csv"
+    valid_csv: str = "./artifacts/casme_split_new/fold_1/valid.csv"
     images_dir: str = "/path/to/images"  # folder with Seq_*.jpg
     outdir: str = "./artifacts/learnNetmodels/checkpoints/"
     log_dir: str = "./artifacts/learnNetmodels/logs/"
