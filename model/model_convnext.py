@@ -2,7 +2,7 @@
 import timm
 import torch.nn as nn
 
-MODEL_NAME = "vit_base_patch16_224"
+MODEL_NAME = "vit_base_patch16_224.augreg2_in21k_ft_in1k"
 
 def build_model(num_classes: int):
     # Load pretrained ConvNeXtV2
