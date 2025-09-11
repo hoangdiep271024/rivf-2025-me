@@ -1,16 +1,17 @@
 # model_convnext.py
-from transformers import ConvNextForImageClassification
+import timm
 import torch.nn as nn
 
 MODEL_NAME = "convnextv2_base.fcmae_ft_in1k"
 
 class ConvNextWrapper(nn.Module):
-    def __init__(self, num_classes: int, hidden_dim: int = 1024, dropout: float = 0.3):
+    def __init__(self, num_classes: int, hidden_dim: int = 1024, dropout: float = 0.3, pretrained: bool = True):
         super().__init__()
-        self.model = ConvNextForImageClassification.from_pretrained(MODEL_NAME)
-        in_features = self.model.classifier.in_features
+        self.model = timm.create_model(MODEL_NAME, pretrained=pretrained)
+        in_features = self.model.get_classifier().in_features
         
-        # Mạnh hơn: thêm 1 hidden layer với ReLU + Dropout
+        # Thay classifier mạnh hơn: Linear -> ReLU -> Dropout -> Linear
+        self.model.reset_classifier(0)  # xóa classifier gốc
         self.model.classifier = nn.Sequential(
             nn.Linear(in_features, hidden_dim),
             nn.ReLU(),
@@ -19,8 +20,7 @@ class ConvNextWrapper(nn.Module):
         )
 
     def forward(self, x):
-        # Trả về logits trực tiếp
-        return self.model(x)
+        return self.model(x)  # trả về logits trực tiếp
 
 def build_model(num_classes: int):
     return ConvNextWrapper(num_classes)
