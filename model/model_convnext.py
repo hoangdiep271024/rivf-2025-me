@@ -2,7 +2,7 @@
 from transformers import ConvNextForImageClassification
 import torch.nn as nn
 
-MODEL_NAME = "convnextv2_base.fcmae_ft_in22k_in1k"
+MODEL_NAME = "convnextv2_base.fcmae_ft_in1k"
 
 class ConvNextWrapper(nn.Module):
     def __init__(self, num_classes: int, hidden_dim: int = 1024, dropout: float = 0.3):
