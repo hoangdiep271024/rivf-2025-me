@@ -6,7 +6,7 @@ MODEL_NAME = "convnextv2_tiny.fcmae_ft_in22k_in1k"
 
 def build_model(num_classes: int):
     # Load pretrained ConvNeXtV2
-    model = timm.create_model(MODEL_NAME, pretrained=True)
+    model = timm.create_model(MODEL_NAME, pretrained=False)
     
     # Reset classifier về đúng số lớp, 1 Linear cuối cùng
     model.reset_classifier(num_classes)
