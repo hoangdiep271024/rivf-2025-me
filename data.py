@@ -27,18 +27,29 @@ def _extract_seq_number(seq: str) -> int:
 #     ]:
 #         if p.exists(): return p
 #     return None
-def _resolve_path(seq_id: int, frame_num: int, images_dir: Path) -> Optional[Path]:
+from pathlib import Path
+from typing import Optional, List
+
+def _resolve_path(num: int, images_dir: Path) -> Optional[List[Path]]:
     """
-    Tìm ảnh theo format: Seq_<seq_id>_<frame_num:02d>.jpg
+    Trả về list các file ảnh hợp lệ theo format: Seq_<num>_<frame:02d>.jpg
+    Mỗi sequence có 20 frame: 01 → 20.
     """
-    candidates = [
-        images_dir / f"Seq_{seq_id}_{frame_num:02d}.jpg",  # Seq_1_01.jpg
-        images_dir / f"Seq_{seq_id}_{frame_num}.jpg",      # fallback nếu không có padding
-    ]
-    for p in candidates:
-        if p.exists():
-            return p
-    return None
+    paths = []
+    for frame_num in range(1, 21):  # 01 → 20
+        candidates = [
+            images_dir / f"Seq_{num}_{frame_num:02d}.jpg",  # Seq_1_01.jpg
+            images_dir / f"Seq_{num}_{frame_num}.jpg",      # fallback: Seq_1_1.jpg
+        ]
+        for p in candidates:
+            if p.exists():
+                paths.append(p)
+                break  # nếu đã tìm thấy thì bỏ qua candidate còn lại
+
+    if not paths:
+        return None
+    return paths
+
 
 def compute_class_weights(y: np.ndarray, scheme: str = "inv_freq") -> torch.Tensor:
     counts = Counter(map(int, y))
@@ -106,18 +117,38 @@ class CASMECSVDataset(Dataset):
         self.le = label_encoder
 
         # Clean labels (no mapping here — you said it's already done)
+        
+        
+        # labels_str = df["label"].astype("string").str.strip().str.split().str[0].fillna("")
+        # samples, missing = [], 0
+        # for seq, lab in zip(df["Sequence"].astype(str), labels_str.astype(str)):
+        #     num = _extract_seq_number(seq)
+        #     p = _resolve_path(num, self.images_dir)
+        #     if p is None:
+        #         missing += 1
+        #         if self.drop_missing: continue
+        #         raise FileNotFoundError(f"Image for {seq} not found in {self.images_dir}")
+        #     samples.append((p, lab))
+        # if missing and self.drop_missing:
+        #     print(f"[CASMECSVDataset] skipped {missing} rows (missing images).")
+
         labels_str = df["label"].astype("string").str.strip().str.split().str[0].fillna("")
         samples, missing = [], 0
         for seq, lab in zip(df["Sequence"].astype(str), labels_str.astype(str)):
-            num = _extract_seq_number(seq)
-            p = _resolve_path(num, self.images_dir)
-            if p is None:
+            num = _extract_seq_number(seq)   # ví dụ: "Seq_1" -> 1
+            paths = _resolve_path(num, self.images_dir)
+            if paths is None:
                 missing += 1
-                if self.drop_missing: continue
-                raise FileNotFoundError(f"Image for {seq} not found in {self.images_dir}")
-            samples.append((p, lab))
+                if self.drop_missing:
+                    continue
+                raise FileNotFoundError(f"Images for {seq} not found in {self.images_dir}")
+    
+            for p in paths:
+                samples.append((p, lab))
+
         if missing and self.drop_missing:
             print(f"[CASMECSVDataset] skipped {missing} rows (missing images).")
+
 
         self.samples = samples
         self.y = self.le.transform([lab for _, lab in samples]).astype(np.int64)
