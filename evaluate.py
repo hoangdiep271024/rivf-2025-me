@@ -1,4 +1,4 @@
-from dataclasses import dataclass, asdict
+effrom dataclasses import dataclass, asdict
 from pathlib import Path
 import os, random, json
 import numpy as np
@@ -15,7 +15,7 @@ from sklearn.metrics import (
     precision_recall_fscore_support,
 )
 
-from model.model_resnet import build_model
+from model.model_efficientnet import build_model
 # We’ll import your dataset + transforms so we can inject the checkpoint's LabelEncoder
 from data import CASMECSVDataset, build_transforms
 
