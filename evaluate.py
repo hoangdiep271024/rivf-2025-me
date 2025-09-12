@@ -23,7 +23,7 @@ from data import CASMECSVDataset, build_transforms
 @dataclass
 class Config:
     # data/ckpt
-    valid_csv: str = "./artifacts/casme_split_new/fold_1/valid.csv"
+    valid_csv: str = "./artifacts/samm_split/fold_1/valid.csv"
     images_dir: str = "/path/to/images"
     checkpoint: str = "./artifacts/learnNetmodels/checkpoints/best_0.9123.pth"
 
@@ -233,8 +233,8 @@ def run_eval(cfg: Config):
 if __name__ == "__main__":
     for fold in range(1, 6):
         cfg = Config(
-            valid_csv=f"./artifacts/casme_split_new/fold_{fold}/valid.csv",
-            images_dir="./media/CASMEV2_new/dynamic_images",
+            valid_csv=f"./artifacts/samm_split/fold_{fold}/valid.csv",
+            images_dir="./media/SAMM/dynamic_images",
             checkpoint=f"./artifacts/learnNetmodels/checkpoints/fold_{fold}/best_last.pth",
             outdir=f"./artifacts/learnNetmodels/eval_fold_{fold}",
             grayscale=False,      # RGB default

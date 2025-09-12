@@ -20,8 +20,8 @@ from model.model_resnet import build_model
 @dataclass
 class Config:
     # paths
-    train_csv: str = "./artifacts/casme_split_new/fold_1/train.csv"
-    valid_csv: str = "./artifacts/casme_split_new/fold_1/valid.csv"
+    train_csv: str = "./artifacts/samm_split/fold_1/train.csv"
+    valid_csv: str = "./artifacts/samm_split/fold_1/valid.csv"
     images_dir: str = "/path/to/images"  # folder with Seq_*.jpg
     outdir: str = "./artifacts/learnNetmodels/checkpoints/"
     log_dir: str = "./artifacts/learnNetmodels/logs/"
@@ -254,13 +254,13 @@ def main(cfg: Config):
 
 
 if __name__ == "__main__":
-    base_dir = Path("./artifacts/casme_split_new")
+    base_dir = Path("./artifacts/samm_split")
     for fold in range(1, 6): 
         print(f"\n===== Training Fold {fold}/5 =====")
         cfg = Config(
             train_csv=str(base_dir / f"fold_{fold}/train.csv"),
             valid_csv=str(base_dir / f"fold_{fold}/valid.csv"),
-            images_dir="./media/CASMEV2_new/dynamic_images",
+            images_dir="./media/SAMM/dynamic_images",
             outdir=f"./artifacts/learnNetmodels/checkpoints/fold_{fold}",
             log_dir=f"./artifacts/learnNetmodels/logs/fold_{fold}",
             grayscale=False,
