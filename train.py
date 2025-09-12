@@ -260,7 +260,7 @@ if __name__ == "__main__":
         cfg = Config(
             train_csv=str(base_dir / f"fold_{fold}/train.csv"),
             valid_csv=str(base_dir / f"fold_{fold}/valid.csv"),
-            images_dir="./media/CASME_new/dynamic_images",
+            images_dir="./media/CASMEV2_new/dynamic_images",
             outdir=f"./artifacts/learnNetmodels/checkpoints/fold_{fold}",
             log_dir=f"./artifacts/learnNetmodels/logs/fold_{fold}",
             grayscale=False,
