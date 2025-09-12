@@ -3,7 +3,7 @@ import torch.nn as nn
 
 def build_model(num_classes: int, pretrained: bool = True):
     model = timm.create_model(
-        "vgg13_bn",
+        "densenet201.tv_in1k",
         pretrained=pretrained,
         num_classes=num_classes,       
     )
