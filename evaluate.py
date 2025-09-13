@@ -238,7 +238,7 @@ if __name__ == "__main__":
             checkpoint=f"./artifacts/learnNetmodels/checkpoints/fold_{fold}/best_last.pth",
             outdir=f"./artifacts/learnNetmodels/eval_fold_{fold}",
             grayscale=False,      # RGB default
-            input_size=112,
+            input_size=224,
             batch_size=32,
             num_workers=4,
             seed=42,
