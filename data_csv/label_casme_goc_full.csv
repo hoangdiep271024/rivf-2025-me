@@ -79,7 +79,7 @@ Seq77,others
 Seq78,others
 Seq79,happiness
 Seq80,others
-Seq81,others
+Seq81,fear
 Seq82,happiness
 Seq83,others
 Seq84,others
@@ -91,7 +91,7 @@ Seq89,others
 Seq90,others
 Seq91,others
 Seq92,others
-Seq93,others
+Seq93,fear
 Seq94,others
 Seq95,others
 Seq96,others
@@ -168,8 +168,8 @@ Seq166,disgust
 Seq167,disgust
 Seq168,disgust
 Seq169,happiness
-Seq170,others
-Seq171,others
+Seq170,sadness
+Seq171,sadness
 Seq172,others
 Seq173,others
 Seq174,disgust
@@ -192,7 +192,7 @@ Seq190,disgust
 Seq191,others
 Seq192,surprise
 Seq193,surprise
-Seq194,others
+Seq194,sadness
 Seq195,disgust
 Seq196,others
 Seq197,disgust
@@ -222,12 +222,12 @@ Seq220,others
 Seq221,others
 Seq222,disgust
 Seq223,disgust
-Seq224,others
-Seq225,others
+Seq224,sadness
+Seq225,sadness
 Seq226,others
 Seq227,others
 Seq228,others
-Seq229,others
+Seq229,sadness
 Seq230,others
 Seq231,surprise
 Seq232,others
@@ -246,7 +246,7 @@ Seq244,disgust
 Seq245,others
 Seq246,happiness
 Seq247,disgust
-Seq248,others
+Seq248,sadness
 Seq249,disgust
 Seq250,disgust
 Seq251,others
