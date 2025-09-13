@@ -169,15 +169,32 @@ def train_one_epoch(model, criterion, optimizer, loader, device):
 def evaluate(model, criterion, loader, device):
     model.eval()
     run_loss, run_correct, n = 0.0, 0.0, 0
-    for xb, yb in loader:
-        xb = xb.to(device, non_blocking=True)
-        yb = yb.to(device, non_blocking=True)
-        out = model(xb)
-        loss = criterion(out, yb)
-        run_loss += loss.item() * xb.size(0)
-        run_correct += (out.argmax(1) == yb).float().sum().item()
-        n += xb.size(0)
-    return run_loss / max(n, 1), run_correct / max(n, 1)
+    all_preds, all_labels = [], []
+
+    with torch.no_grad():
+        for xb, yb in loader:
+            xb = xb.to(device, non_blocking=True)
+            yb = yb.to(device, non_blocking=True)
+
+            out = model(xb)
+            loss = criterion(out, yb)
+
+            run_loss += loss.item() * xb.size(0)
+            run_correct += (out.argmax(1) == yb).float().sum().item()
+            n += xb.size(0)
+
+            preds = out.argmax(1).cpu().numpy()
+            labels = yb.cpu().numpy()
+            all_preds.extend(preds)
+            all_labels.extend(labels)
+
+    # Metrics
+    acc = run_correct / max(n, 1)
+    f1 = f1_score(all_labels, all_preds, average="macro", zero_division=0)
+    prec = precision_score(all_labels, all_preds, average="macro", zero_division=0)
+    rec = recall_score(all_labels, all_preds, average="macro", zero_division=0)
+
+    return run_loss / max(n, 1), acc, f1, prec, rec
 
 
 # -------------------- Main --------------------
@@ -221,11 +238,11 @@ def main(cfg: Config):
     outdir = Path(cfg.outdir); outdir.mkdir(parents=True, exist_ok=True)
     writer = SummaryWriter(log_dir=cfg.log_dir)
 
-    best_acc, best_path = 0.0, None
+    best_score, best_path = 0.0, None
     for epoch in range(1, cfg.epochs + 1):
         t0 = time.time()
         tr_loss, tr_acc = train_one_epoch(model, criterion, optimizer, train_loader, device)
-        va_loss, va_acc = evaluate(model, criterion, valid_loader, device)
+        va_loss, va_acc, va_f1, va_prec, va_rec = evaluate(model, criterion, valid_loader, device)
         if scheduler: scheduler.step()
 
         # TensorBoard
@@ -242,12 +259,18 @@ def main(cfg: Config):
               f"{time.time()-t0:.1f}s")
 
         # Save best + last
-        if va_acc >= best_acc:
-            best_acc = va_acc
-            torch.save({"model": model.state_dict(),
-                    "classes": class_names,
-                    "config": asdict(cfg)}, outdir / "best_last.pth")
 
+        score = va_f1 + va_prec + va_rec
+
+    # Save best model
+    if score >= best_score:
+        best_score = score
+        best_path = outdir / "best_last.pth"
+        torch.save({
+            "model": model.state_dict(),
+            "classes": class_names,
+            "config": asdict(cfg),
+        }, best_path)
     writer.close()
     print(f"\nBest val acc: {best_acc:.4f} | saved: {best_path}")
     print(f"TensorBoard: tensorboard --logdir {cfg.log_dir}")
