@@ -12,7 +12,7 @@ from torch.utils.data import DataLoader, WeightedRandomSampler
 from torch.utils.tensorboard import SummaryWriter
 
 from data import build_datasets_from_splits, compute_class_weights as compute_class_weights_from_data
-from model.model_resnet import build_model
+from model.model_vgg import build_model
 
 
 
@@ -254,13 +254,13 @@ def main(cfg: Config):
 
 
 if __name__ == "__main__":
-    base_dir = Path("./artifacts/samm_split_new")
+    base_dir = Path("./artifacts/samm_split")
     for fold in range(1, 6): 
         print(f"\n===== Training Fold {fold}/5 =====")
         cfg = Config(
             train_csv=str(base_dir / f"fold_{fold}/train.csv"),
             valid_csv=str(base_dir / f"fold_{fold}/valid.csv"),
-            images_dir="./media/SAMM_new/dynamic_images",
+            images_dir="./media/SAMM/dynamic_images",
             outdir=f"./artifacts/learnNetmodels/checkpoints/fold_{fold}",
             log_dir=f"./artifacts/learnNetmodels/logs/fold_{fold}",
             grayscale=False,
@@ -269,7 +269,7 @@ if __name__ == "__main__":
             batch_size=32,
             lr=2e-3,
             weight_decay=4e-5,
-            epochs=100,
+            epochs=150,
             seed=42,
             use_class_weights=True,
             balance_sampler=False,
