@@ -264,7 +264,7 @@ if __name__ == "__main__":
             outdir=f"./artifacts/learnNetmodels/checkpoints/fold_{fold}",
             log_dir=f"./artifacts/learnNetmodels/logs/fold_{fold}",
             grayscale=False,
-            input_size=112,
+            input_size=224,
             num_workers=4,
             batch_size=32,
             lr=2e-3,
