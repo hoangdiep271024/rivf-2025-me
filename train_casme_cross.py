@@ -12,7 +12,7 @@ from torch.utils.data import DataLoader, WeightedRandomSampler
 from torch.utils.tensorboard import SummaryWriter
 
 from data_cross import build_datasets_from_splits, compute_class_weights as compute_class_weights_from_data
-from model.model_dinov3 import build_model
+from model.model_radiov3 import build_model
 
 
 
