@@ -13,8 +13,7 @@ from torch.utils.tensorboard import SummaryWriter
 
 from data import build_datasets_from_splits, compute_class_weights as compute_class_weights_from_data
 from model.model_dinov3 import build_model
-from sklearn.metrics import f1_score, precision_score, recall_score
-
+from torchmetrics.classification import MulticlassF1Score, MulticlassPrecision, MulticlassRecall
 
 
 # -------------------- Config --------------------
@@ -167,10 +166,13 @@ def train_one_epoch(model, criterion, optimizer, loader, device):
     return run_loss / max(n, 1), run_correct / max(n, 1)
 
 @torch.no_grad()
-def evaluate(model, criterion, loader, device):
+def evaluate(model, criterion, loader, device, num_classes):
     model.eval()
     run_loss, run_correct, n = 0.0, 0.0, 0
-    all_preds, all_labels = [], []
+
+    f1_metric = MulticlassF1Score(num_classes=num_classes, average="macro").to(device)
+    prec_metric = MulticlassPrecision(num_classes=num_classes, average="macro").to(device)
+    rec_metric = MulticlassRecall(num_classes=num_classes, average="macro").to(device)
 
     with torch.no_grad():
         for xb, yb in loader:
@@ -184,16 +186,15 @@ def evaluate(model, criterion, loader, device):
             run_correct += (out.argmax(1) == yb).float().sum().item()
             n += xb.size(0)
 
-            preds = out.argmax(1).cpu().numpy()
-            labels = yb.cpu().numpy()
-            all_preds.extend(preds)
-            all_labels.extend(labels)
+            preds = out.argmax(1)
+            f1_metric.update(preds, yb)
+            prec_metric.update(preds, yb)
+            rec_metric.update(preds, yb)
 
-    # Metrics
     acc = run_correct / max(n, 1)
-    f1 = f1_score(all_labels, all_preds, average="macro", zero_division=0)
-    prec = precision_score(all_labels, all_preds, average="macro", zero_division=0)
-    rec = recall_score(all_labels, all_preds, average="macro", zero_division=0)
+    f1 = f1_metric.compute().item()
+    prec = prec_metric.compute().item()
+    rec = rec_metric.compute().item()
 
     return run_loss / max(n, 1), acc, f1, prec, rec
 
