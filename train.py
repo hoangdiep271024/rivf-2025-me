@@ -269,7 +269,7 @@ if __name__ == "__main__":
             batch_size=32,
             lr=2e-3,
             weight_decay=4e-5,
-            epochs=150,
+            epochs=100,
             seed=42,
             use_class_weights=True,
             balance_sampler=False,
