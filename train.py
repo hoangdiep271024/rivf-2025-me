@@ -273,7 +273,7 @@ def main(cfg: Config):
             "config": asdict(cfg),
         }, best_path)
     writer.close()
-    print(f"\nBest val acc: {best_acc:.4f} | saved: {best_path}")
+    print(f"\nBest val acc: {best_score:.4f} | saved: {best_path}")
     print(f"TensorBoard: tensorboard --logdir {cfg.log_dir}")
 
 
