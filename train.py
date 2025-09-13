@@ -12,7 +12,7 @@ from torch.utils.data import DataLoader, WeightedRandomSampler
 from torch.utils.tensorboard import SummaryWriter
 
 from data import build_datasets_from_splits, compute_class_weights as compute_class_weights_from_data
-from model.model_dinov3 import build_model
+from model.model_vgg import build_model
 
 
 
@@ -269,7 +269,7 @@ if __name__ == "__main__":
             batch_size=32,
             lr=2e-3,
             weight_decay=4e-5,
-            epochs=100,
+            epochs=150,
             seed=42,
             use_class_weights=True,
             balance_sampler=False,
