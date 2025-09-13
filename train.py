@@ -13,6 +13,7 @@ from torch.utils.tensorboard import SummaryWriter
 
 from data import build_datasets_from_splits, compute_class_weights as compute_class_weights_from_data
 from model.model_dinov3 import build_model
+from sklearn.metrics import f1_score, precision_score, recall_score
 
 
 
