@@ -27,22 +27,22 @@ def _extract_frame_number(seq: str) -> int:
     return int(m.group(1))
 
 
-def _resolve_path(num: int, images_dir: Path) -> Optional[Path]:
-    for p in [
-        images_dir / f"Seq_{num}.jpg",
-        images_dir / f"Seq{num}.jpg",
-        images_dir / f"Seq_{num:03d}.jpg",
-    ]:
-        if p.exists(): return p
-    return None
-# def _resolve_path(num: int, num_frame: int ,images_dir: Path) -> Optional[Path]:
+# def _resolve_path(num: int, images_dir: Path) -> Optional[Path]:
 #     for p in [
-#         images_dir / f"Seq_{num}_{num_frame:02d}.jpg",
-#         images_dir / f"Seq{num}_{num_frame:02d}.jpg",
-#         images_dir / f"Seq_{num:03d}_{num_frame:02d}.jpg",
+#         images_dir / f"Seq_{num}.jpg",
+#         images_dir / f"Seq{num}.jpg",
+#         images_dir / f"Seq_{num:03d}.jpg",
 #     ]:
 #         if p.exists(): return p
 #     return None
+def _resolve_path(num: int, num_frame: int ,images_dir: Path) -> Optional[Path]:
+    for p in [
+        images_dir / f"Seq_{num}_{num_frame:02d}.jpg",
+        images_dir / f"Seq{num}_{num_frame:02d}.jpg",
+        images_dir / f"Seq_{num:03d}_{num_frame:02d}.jpg",
+    ]:
+        if p.exists(): return p
+    return None
 
 
 def compute_class_weights(y: np.ndarray, scheme: str = "inv_freq") -> torch.Tensor:
@@ -117,9 +117,9 @@ class CASMECSVDataset(Dataset):
         samples, missing = [], 0
         for seq, lab in zip(df["Sequence"].astype(str), labels_str.astype(str)):
             num = _extract_seq_number(seq)
-            # num_frame = _extract_frame_number(seq)
-            p = _resolve_path(num, self.images_dir)
-            #p = _resolve_path(num, num_frame, self.images_dir)
+            num_frame = _extract_frame_number(seq)
+            # p = _resolve_path(num, self.images_dir)
+            p = _resolve_path(num, num_frame, self.images_dir)
             if p is None:
                 missing += 1
                 if self.drop_missing: continue
