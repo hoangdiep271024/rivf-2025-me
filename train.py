@@ -244,7 +244,7 @@ def main(cfg: Config):
     for epoch in range(1, cfg.epochs + 1):
         t0 = time.time()
         tr_loss, tr_acc = train_one_epoch(model, criterion, optimizer, train_loader, device)
-        va_loss, va_acc, va_f1, va_prec, va_rec = evaluate(model, criterion, valid_loader, device)
+        va_loss, va_acc, va_f1, va_prec, va_rec = evaluate(model, criterion, valid_loader, device, num_classes)
         if scheduler: scheduler.step()
 
         # TensorBoard
