@@ -35,15 +35,6 @@ def _resolve_path(num: int, images_dir: Path) -> Optional[Path]:
     ]:
         if p.exists(): return p
     return None
-# def _resolve_path(num: int, num_frame: int ,images_dir: Path) -> Optional[Path]:
-#     for p in [
-#         images_dir / f"Seq_{num}_{num_frame:02d}.jpg",
-#         images_dir / f"Seq{num}_{num_frame:02d}.jpg",
-#         images_dir / f"Seq_{num:03d}_{num_frame:02d}.jpg",
-#     ]:
-#         if p.exists(): return p
-#     return None
-
 
 def compute_class_weights(y: np.ndarray, scheme: str = "inv_freq") -> torch.Tensor:
     counts = Counter(map(int, y))
