@@ -246,7 +246,7 @@ def main(cfg: Config):
               f"{time.time()-t0:.1f}s")
 
         # Save best + last
-        if va_acc >= best_acc:
+        if va_acc >= best_acc & epoch > 70:
             best_acc = va_acc
             torch.save({"model": model.state_dict(),
                     "classes": class_names,
