@@ -122,10 +122,11 @@ class CASMECSVDataset(Dataset):
         path_img, path_npy, lab_str = self.samples[idx]
         img = Image.open(path_img).convert("L" if self.grayscale else "RGB")
         x = self.transform(img) if self.transform else img
-        # Load vector npy
-        vec = np.load(path_npy)  # shape (1,53)
-        vec = torch.tensor(vec, dtype=torch.float32).squeeze(0)  # (53,)
-        # Label
+        if path_npy is not None and path_npy.exists():
+            vec = np.load(path_npy)
+            vec = torch.tensor(vec, dtype=torch.float32).squeeze(0)
+        else:
+            vec = torch.zeros((53,), dtype=torch.float32) 
         y = int(self.le.transform([lab_str])[0])
         return x, vec, y
 
@@ -142,21 +143,39 @@ def build_datasets_from_splits(
     train_csv: str,
     valid_csv: str,
     images_dir: str,
+    npy_dir: str,
     grayscale: bool = True,
     target_size: Tuple[int,int] = (112,112),
 ):
     train_df, valid_df = load_splits(train_csv, valid_csv)
 
-    # Fit ONE encoder on union so train/valid share the same id mapping
+    # Fit ONE encoder cho cả train + valid
     le = LabelEncoder().fit(pd.concat([train_df["label"], valid_df["label"]], axis=0))
 
     train_tf = build_transforms(grayscale=grayscale, train=True,  target_size=target_size)
     valid_tf = build_transforms(grayscale=grayscale, train=False, target_size=target_size)
 
-    train_ds = CASMECSVDataset(train_df, images_dir, label_encoder=le,
-                               grayscale=grayscale, transform=train_tf, target_size=target_size)
-    valid_ds = CASMECSVDataset(valid_df, images_dir, label_encoder=le,
-                               grayscale=grayscale, transform=valid_tf, target_size=target_size)
+    # Train dataset có vector npy
+    train_ds = CASMECSVDataset(
+        train_df,
+        images_dir,
+        label_encoder=le,
+        grayscale=grayscale,
+        transform=train_tf,
+        target_size=target_size,
+        npy_dir=npy_dir,    # train cần vector
+    )
+
+    # Valid dataset KHÔNG có vector npy
+    valid_ds = CASMECSVDataset(
+        valid_df,
+        images_dir,
+        label_encoder=le,
+        grayscale=grayscale,
+        transform=valid_tf,
+        target_size=target_size,
+        npy_dir=None,       # bỏ vector
+    )
 
     meta = {
         "class_names": list(le.classes_),
@@ -166,41 +185,6 @@ def build_datasets_from_splits(
     }
     return train_ds, valid_ds, meta
 
-def build_loaders_from_splits(
-    train_csv: str,
-    valid_csv: str,
-    images_dir: str,
-    batch_size: int = 32,
-    num_workers: int = 4,
-    grayscale: bool = True,
-    balance_train: bool = True,
-    npy_dir: str = None,   # thêm tham số
-):
-    # train có npy
-    train_ds, valid_ds, meta = build_datasets_from_splits(
-        train_csv,
-        valid_csv,
-        images_dir,
-        grayscale=grayscale,
-        npy_dir=npy_dir   # chỉ train dùng npy_dir
-    )
-
-    train_loader = make_balanced_loader(
-        train_ds,
-        batch_size=batch_size,
-        num_workers=num_workers,
-        balance=balance_train
-    )
-
-    valid_loader = DataLoader(
-        valid_ds,
-        batch_size=batch_size,
-        shuffle=False,
-        num_workers=num_workers,
-        pin_memory=True
-    )
-
-    return train_loader, valid_loader, meta
 
 
 
@@ -214,6 +198,8 @@ if __name__ == "__main__":
     ap.add_argument("--workers", type=int, default=4)
     ap.add_argument("--rgb", action="store_true", help="Use RGB pipeline (default grayscale)")
     ap.add_argument("--no_balance", action="store_true", help="Disable balanced sampler for train")
+    ap.add_argument("--npy_dir", type=str, help="Directory chứa vector .npy")
+
     args = ap.parse_args()
 
     train_loader, valid_loader, meta = build_loaders_from_splits(

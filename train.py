@@ -155,7 +155,7 @@ def train_one_epoch(model, criterion, optimizer, loader, device):
         yb = yb.to(device, non_blocking=True)
 
         optimizer.zero_grad(set_to_none=True)
-        out = model(xb)
+        out, _ = model(xb.to(device, non_blocking=True), extra_vec=vb)
         loss = criterion(out, yb)
         loss.backward()
         optimizer.step()

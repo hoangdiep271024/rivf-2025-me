@@ -178,14 +178,14 @@ def evaluate(model, criterion, loader, device):
     model.eval()
     run_loss, run_correct, n = 0.0, 0.0, 0
     for xb, yb in loader:
-        xb = xb.to(device, non_blocking=True)
-        yb = yb.to(device, non_blocking=True)
-        out = model(xb)
+        xb, yb = xb.to(device), yb.to(device)
+        extra_vec = torch.zeros((xb.size(0), model.extra_dim), device=device)  # zeros 53 chiều
+        out, _ = model(xb, extra_vec)
         loss = criterion(out, yb)
         run_loss += loss.item() * xb.size(0)
         run_correct += (out.argmax(1) == yb).float().sum().item()
         n += xb.size(0)
-    return run_loss / max(n, 1), run_correct / max(n, 1)
+    return run_loss / n, run_correct / n
 
 
 # -------------------- Main --------------------
@@ -199,9 +199,9 @@ def main(cfg: Config):
     train_ds, valid_ds, meta = build_datasets_from_splits(
     train_csv=cfg.train_csv,
     valid_csv=cfg.valid_csv,
-    images_train_dir=cfg.images_train_dir,
-    images_test_dir=cfg.images_test_dir,
+    images_dir=cfg.images_dir,
     grayscale=cfg.grayscale,
+    npy_dir=cfg.npy_dir,
     target_size=(cfg.input_size, cfg.input_size),
 )
 
@@ -215,7 +215,7 @@ def main(cfg: Config):
 
     # Model / Loss / Optim / Sched
     # model = LEARNet(num_classes=num_classes).to(device)
-    model = build_model(num_classes=num_classes).to(device)
+    model = build_model(num_classes=num_classes, extra_dim=53).to(device)
 
     if cfg.use_class_weights:
         y_train = getattr(train_ds, "y")
