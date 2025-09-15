@@ -155,10 +155,10 @@ def train_one_epoch(model, criterion, optimizer, loader, device):
         if len(batch) == 3:
             xb, vb, yb = batch
             vb = vb.to(device, non_blocking=True)
-            out = model(xb.to(device, non_blocking=True), extra_vec=vb)
+            out, _ = model(xb.to(device, non_blocking=True), extra_vec=vb)
         else:
             xb, yb = batch
-            out = model(xb.to(device, non_blocking=True))
+            out, _ = model(xb.to(device, non_blocking=True))
 
         yb = yb.to(device, non_blocking=True)
 
@@ -173,18 +173,26 @@ def train_one_epoch(model, criterion, optimizer, loader, device):
 
     return run_loss / max(n, 1), run_correct / max(n, 1)
 
+
 @torch.no_grad()
 def evaluate(model, criterion, loader, device):
     model.eval()
     run_loss, run_correct, n = 0.0, 0.0, 0
-    for xb, yb in loader:
-        xb, yb = xb.to(device), yb.to(device)
-        extra_vec = torch.zeros((xb.size(0), model.extra_dim), device=device)  # zeros 53 chiều
-        out, _ = model(xb, extra_vec)
+    
+    for batch in loader:
+        # Validation dataset trả về (xb, vb, yb) - vb là vector toàn 0
+        xb, vb, yb = batch
+        xb = xb.to(device)
+        vb = vb.to(device)  # Vector 0 từ dataset
+        yb = yb.to(device)
+        
+        out, _ = model(xb, extra_vec=vb)
         loss = criterion(out, yb)
+        
         run_loss += loss.item() * xb.size(0)
         run_correct += (out.argmax(1) == yb).float().sum().item()
         n += xb.size(0)
+    
     return run_loss / n, run_correct / n
 
 
