@@ -34,3 +34,7 @@ class CustomModel(nn.Module):
             return out, features
         return out
 
+        
+
+def build_model(num_classes: int, pretrained: bool = True):
+    return CustomModel(num_classes, pretrained)

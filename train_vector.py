@@ -22,8 +22,7 @@ class Config:
     # paths
     train_csv: str = "./artifacts/casme_split_new/fold_1/train.csv"
     valid_csv: str = "./artifacts/casme_split_new/fold_1/valid.csv"
-    images_train_dir: str = "/path/to/images"  
-    images_test_dir: str = "/path/to/images" 
+    images_dir: str = "/path/to/images"  
     outdir: str = "./artifacts/learnNetmodels/checkpoints/"
     log_dir: str = "./artifacts/learnNetmodels/logs/"
     npy_dir: str = "./artifacts/learnNetmodels/logs/"
@@ -272,8 +271,7 @@ if __name__ == "__main__":
         cfg = Config(
             train_csv=str(base_dir / f"fold_{fold}/train_new.csv"),
             valid_csv=str(base_dir / f"fold_{fold}/valid.csv"),
-            images_train_dir="./media/CASMEV2_mix/dynamic_images",
-            images_test_dir= "./media/CASMEV2/dynamic_images",
+            images_dir="./media/CASMEV2/dynamic_images",
             outdir=f"./artifacts/learnNetmodels/checkpoints/fold_{fold}",
             log_dir=f"./artifacts/learnNetmodels/logs/fold_{fold}",
             npy_dir="./SMIRK_vector/CASME_SMIRK_mean",
