@@ -87,10 +87,10 @@ class CASMECSVDataset(Dataset):
         transform: Optional[Callable] = None,
         target_size: Tuple[int,int] = (112,112),
         drop_missing: bool = True,
-        npy_dir: Optional[str] = None,  # thêm tham số này
+        npy_dir: Optional[str] = None,  # chỉ dùng cho train
     ):
         self.images_dir = Path(images_dir)
-        self.npy_dir = Path(npy_dir) if npy_dir else self.images_dir  # mặc định cùng chỗ với ảnh
+        self.npy_dir = Path(npy_dir) if npy_dir else None
         self.grayscale = grayscale
         self.transform = transform or build_transforms(grayscale=grayscale, train=True, target_size=target_size)
         self.drop_missing = drop_missing
@@ -101,13 +101,22 @@ class CASMECSVDataset(Dataset):
         for seq, lab in zip(df["Sequence"].astype(str), labels_str.astype(str)):
             num = _extract_seq_number(seq)
             p_img = _resolve_path(num, self.images_dir)
-            p_npy = self.npy_dir / f"Seq_{num}.npy"   # file vector kèm theo
-            if p_img is None or not p_npy.exists():
+            p_npy = self.npy_dir / f"Seq_{num}.npy" if self.npy_dir else None
+
+            if p_img is None:
                 missing += 1
                 if self.drop_missing:
                     continue
-                raise FileNotFoundError(f"Missing image or npy for {seq}")
+                raise FileNotFoundError(f"Missing image for {seq}")
+
+            # train mới bắt buộc có npy, valid thì không cần
+            if self.npy_dir and (p_npy is None or not p_npy.exists()):
+                missing += 1
+                if self.drop_missing:
+                    continue
+
             samples.append((p_img, p_npy, lab))
+
         if missing and self.drop_missing:
             print(f"[CASMECSVDataset] skipped {missing} rows (missing image/npy).")
 
@@ -122,11 +131,13 @@ class CASMECSVDataset(Dataset):
         path_img, path_npy, lab_str = self.samples[idx]
         img = Image.open(path_img).convert("L" if self.grayscale else "RGB")
         x = self.transform(img) if self.transform else img
+
         if path_npy is not None and path_npy.exists():
             vec = np.load(path_npy)
             vec = torch.tensor(vec, dtype=torch.float32).squeeze(0)
         else:
-            vec = torch.zeros((53,), dtype=torch.float32) 
+            vec = torch.zeros((53,), dtype=torch.float32)  # valid dùng vector 0
+
         y = int(self.le.transform([lab_str])[0])
         return x, vec, y
 
@@ -164,6 +175,7 @@ def build_datasets_from_splits(
         transform=train_tf,
         target_size=target_size,
         npy_dir=npy_dir,    # train cần vector
+        drop_missing=True,
     )
 
     # Valid dataset KHÔNG có vector npy
@@ -175,6 +187,7 @@ def build_datasets_from_splits(
         transform=valid_tf,
         target_size=target_size,
         npy_dir=None,       # bỏ vector
+        drop_missing=True,  # nếu ảnh có thì giữ
     )
 
     meta = {
