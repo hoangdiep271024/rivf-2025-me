@@ -180,20 +180,25 @@ def evaluate(model, criterion, loader, device):
     run_loss, run_correct, n = 0.0, 0.0, 0
     
     for batch in loader:
-        # Validation dataset trả về (xb, vb, yb) - vb là vector toàn 0
-        xb, vb, yb = batch
-        xb = xb.to(device)
-        vb = vb.to(device)  # Vector 0 từ dataset
-        yb = yb.to(device)
-        
-        out, _ = model(xb, extra_vec=vb)
+        if len(batch) == 3:
+            xb, vb, yb = batch
+            xb = xb.to(device, non_blocking=True)
+            vb = vb.to(device, non_blocking=True)
+            out, _ = model(xb, extra_vec=vb)
+        else:
+            xb, yb = batch
+            xb = xb.to(device, non_blocking=True)
+            out, _ = model(xb)
+
+        yb = yb.to(device, non_blocking=True)
         loss = criterion(out, yb)
         
         run_loss += loss.item() * xb.size(0)
         run_correct += (out.argmax(1) == yb).float().sum().item()
         n += xb.size(0)
     
-    return run_loss / n, run_correct / n
+    return run_loss / max(n, 1), run_correct / max(n, 1)
+
 
 
 # -------------------- Main --------------------

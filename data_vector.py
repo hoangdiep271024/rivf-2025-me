@@ -186,7 +186,7 @@ def build_datasets_from_splits(
         grayscale=grayscale,
         transform=valid_tf,
         target_size=target_size,
-        npy_dir=None,       # bỏ vector
+        npy_dir=npy_dir,       # bỏ vector
         drop_missing=True,  # nếu ảnh có thì giữ
     )
 
