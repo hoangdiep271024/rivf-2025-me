@@ -20,7 +20,6 @@ class CustomModel(nn.Module):
         else:
             raise ValueError("Không tìm thấy classifier hoặc fc trong model")
 
-        # tổng số chiều sau khi concat
         self.backbone_dim = in_features
         self.extra_dim = extra_dim
         self.in_features = in_features + extra_dim
@@ -35,9 +34,8 @@ class CustomModel(nn.Module):
         features = self.model_base(x)  # (B, backbone_dim)
 
         if extra_vec is not None:
-            if extra_vec.dim() == 1:  # nếu chỉ có (extra_dim,) thì thêm batch
+            if extra_vec.dim() == 1:  
                 extra_vec = extra_vec.unsqueeze(0)
-            # đảm bảo cùng batch size
             if features.size(0) != extra_vec.size(0):
                 raise ValueError(f"Batch size không khớp: features={features.size()}, extra_vec={extra_vec.size()}")
             features = torch.cat([features, extra_vec], dim=1)  # (B, backbone+extra)
