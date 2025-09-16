@@ -101,7 +101,7 @@ def _build_valid_dataset(cfg: Config, classes_from_ckpt: list) -> CASMECSVDatase
         transform=tf,
         target_size=(cfg.input_size, cfg.input_size),
         drop_missing=True,
-        npy_dir=None,  # QUAN TRỌNG: validation không dùng vector npy
+        npy_dir=cfg.npy_dir,  # QUAN TRỌNG: validation không dùng vector npy
     )
     return ds
 
@@ -249,6 +249,7 @@ if __name__ == "__main__":
             batch_size=32,
             num_workers=4,
             seed=42,
+            npy_dir = "SMIRK_vector/CASME_SMIRK_weighted"
         )
         print(f"=== Running eval for fold {fold} ===")
         run_eval(cfg)
