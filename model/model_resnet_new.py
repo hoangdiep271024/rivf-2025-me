@@ -35,7 +35,6 @@ class CustomModel(nn.Module):
             self.extra_proj = None
             self.in_features = in_features
 
-        # classifier cuối
         self.classifier = nn.Linear(self.in_features, num_classes)
 
     def forward(self, x, extra_vec=None):
