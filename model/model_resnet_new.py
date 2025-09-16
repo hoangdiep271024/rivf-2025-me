@@ -2,7 +2,7 @@ import timm
 import torch.nn as nn
 import torch
 
-MODEL_NAME = "tf_efficientnetv2_s.in21k_ft_in1k"
+MODEL_NAME = "resnet50.a1_in1k"
 
 class CustomModel(nn.Module):
     def __init__(self, model_name: str, num_classes: int, extra_dim: int = 0, pretrained: bool = True):
