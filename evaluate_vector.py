@@ -249,7 +249,7 @@ if __name__ == "__main__":
             batch_size=32,
             num_workers=4,
             seed=42,
-            npy_dir = "SMIRK_vector/CASME_SMIRK_weighted"
+            npy_dir = "SMIRK_vector/CASME_SMIRK_gaussian"
         )
         print(f"=== Running eval for fold {fold} ===")
         run_eval(cfg)
