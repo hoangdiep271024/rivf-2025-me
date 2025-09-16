@@ -26,7 +26,7 @@ class Config:
     valid_csv: str = "./artifacts/casme_split/fold_1/valid.csv"
     images_dir: str = "/path/to/images"
     checkpoint: str = "./artifacts/learnNetmodels/checkpoints/best_0.9123.pth"
-
+    npy_dir : str ="./SMIRK_vector/CASME_SMIRK_weighted"
     # io
     outdir: str = "./artifacts/learnNetmodels/eval_fold_1"
 
