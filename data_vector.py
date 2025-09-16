@@ -87,7 +87,7 @@ class CASMECSVDataset(Dataset):
         transform: Optional[Callable] = None,
         target_size: Tuple[int,int] = (112,112),
         drop_missing: bool = True,
-        npy_dir: Optional[str] = None,  # chỉ dùng cho train
+        npy_dir: Optional[str] = None,  
     ):
         self.images_dir = Path(images_dir)
         self.npy_dir = Path(npy_dir) if npy_dir else None
