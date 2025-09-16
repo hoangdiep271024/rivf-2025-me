@@ -33,15 +33,24 @@ class CustomModel(nn.Module):
     def forward(self, x, extra_vec=None):
         features = self.model_base(x)  # (B, backbone_dim)
 
+        print(f"Backbone feature: min={features.min().item():.4f}, "
+          f"max={features.max().item():.4f}, "
+          f"mean={features.mean().item():.4f}")
+
         if extra_vec is not None:
-            if extra_vec.dim() == 1:  
-                extra_vec = extra_vec.unsqueeze(0)
-            if features.size(0) != extra_vec.size(0):
-                raise ValueError(f"Batch size không khớp: features={features.size()}, extra_vec={extra_vec.size()}")
-            features = torch.cat([features, extra_vec], dim=1)  # (B, backbone+extra)
+            print(f"Extra vec: min={extra_vec.min().item():.4f}, "
+              f"max={extra_vec.max().item():.4f}, "
+              f"mean={extra_vec.mean().item():.4f}")
+
+            features = torch.cat([features, extra_vec], dim=1)
+
+            print(f"Concat feature: min={features.min().item():.4f}, "
+              f"max={features.max().item():.4f}, "
+              f"mean={features.mean().item():.4f}")
 
         out = self.classifier(features)
         return out, features
+  
 
 def build_model(num_classes: int, extra_dim: int = 0, pretrained: bool = True, model_name: str = "tf_efficientnetv2_s.in21k_ft_in1k"):
     return CustomModel(model_name=model_name, 
