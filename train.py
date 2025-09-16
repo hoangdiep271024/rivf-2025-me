@@ -12,7 +12,7 @@ from torch.utils.data import DataLoader, WeightedRandomSampler
 from torch.utils.tensorboard import SummaryWriter
 
 from data import build_datasets_from_splits, compute_class_weights as compute_class_weights_from_data
-from model.model_resnet import build_model
+from model.model_dinov3 import build_model
 
 
 
@@ -20,8 +20,8 @@ from model.model_resnet import build_model
 @dataclass
 class Config:
     # paths
-    train_csv: str = "./artifacts/casme_split_new/fold_1/train.csv"
-    valid_csv: str = "./artifacts/casme_split_new/fold_1/valid.csv"
+    train_csv: str = "./artifacts/casme_split/fold_1/train.csv"
+    valid_csv: str = "./artifacts/casme_split/fold_1/valid.csv"
     images_dir: str = "/path/to/images"  # folder with Seq_*.jpg
     outdir: str = "./artifacts/learnNetmodels/checkpoints/"
     log_dir: str = "./artifacts/learnNetmodels/logs/"
@@ -155,7 +155,7 @@ def train_one_epoch(model, criterion, optimizer, loader, device):
         yb = yb.to(device, non_blocking=True)
 
         optimizer.zero_grad(set_to_none=True)
-        out, _ = model(xb.to(device, non_blocking=True), extra_vec=vb)
+        out = model(xb)
         loss = criterion(out, yb)
         loss.backward()
         optimizer.step()
@@ -204,7 +204,7 @@ def main(cfg: Config):
 
     # Model / Loss / Optim / Sched
     # model = LEARNet(num_classes=num_classes).to(device)
-    model = build_model(num_classes=num_classes).to(device)
+    model = build_model(num_classes=num_classes, pretrained=True).to(device)
 
     if cfg.use_class_weights:
         y_train = getattr(train_ds, "y")
@@ -244,6 +244,10 @@ def main(cfg: Config):
         # Save best + last
         if va_acc >= best_acc:
             best_acc = va_acc
+            best_path = outdir / f"best_{best_acc:.4f}.pth"
+            torch.save({"model": model.state_dict(),
+                        "classes": class_names,
+                        "config": asdict(cfg)}, best_path)
             torch.save({"model": model.state_dict(),
                     "classes": class_names,
                     "config": asdict(cfg)}, outdir / "best_last.pth")
@@ -260,7 +264,7 @@ if __name__ == "__main__":
         cfg = Config(
             train_csv=str(base_dir / f"fold_{fold}/train.csv"),
             valid_csv=str(base_dir / f"fold_{fold}/valid.csv"),
-            images_dir="./media/CASMEV2/dynamic_images",
+            images_dir="/workspace/rivf-2025-me/media/CASMEV2/dynamic_images",
             outdir=f"./artifacts/learnNetmodels/checkpoints/fold_{fold}",
             log_dir=f"./artifacts/learnNetmodels/logs/fold_{fold}",
             grayscale=False,
@@ -269,7 +273,7 @@ if __name__ == "__main__":
             batch_size=32,
             lr=2e-3,
             weight_decay=4e-5,
-            epochs=10,
+            epochs=100,
             seed=42,
             use_class_weights=True,
             balance_sampler=False,
