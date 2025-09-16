@@ -282,7 +282,7 @@ if __name__ == "__main__":
     for fold in range(1, 6): 
         print(f"\n===== Training Fold {fold}/5 =====")
         cfg = Config(
-            train_csv=str(base_dir / f"fold_{fold}/train_new.csv"),
+            train_csv=str(base_dir / f"fold_{fold}/train.csv"),
             valid_csv=str(base_dir / f"fold_{fold}/valid.csv"),
             images_dir="./media/CASMEV2/dynamic_images",
             outdir=f"./artifacts/learnNetmodels/checkpoints/fold_{fold}",
@@ -294,7 +294,7 @@ if __name__ == "__main__":
             batch_size=32,
             lr=2e-3,
             weight_decay=4e-5,
-            epochs=100,
+            epochs=150,
             seed=42,
             use_class_weights=True,
             balance_sampler=False,
