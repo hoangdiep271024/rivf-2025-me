@@ -1,50 +1,46 @@
+import timm
 import torch
 import torch.nn as nn
 
-MODEL_NAME = "c-radio_v3-b"
+MODEL_NAME = "efficientnet_b1.ft_in1k"
 
 class CustomModel(nn.Module):
-    def __init__(self, num_classes: int, extra_dim: int = 0):
+    def __init__(self, num_classes: int, extra_dim: int = 0, pretrained: bool = True):
         super().__init__()
-        # Backbone RADIO
-        self.model_base = torch.hub.load(
-            'NVlabs/RADIO', 'radio_model',
-            version=MODEL_NAME, progress=True, skip_validation=True
-        )
+        # Backbone EfficientNet
+        self.model_base = timm.create_model(MODEL_NAME, pretrained=pretrained)
+        in_features = self.model_base.classifier.in_features
+        self.model_base.classifier = nn.Identity()
 
+        self.backbone_dim = in_features
         self.extra_dim = extra_dim
-        self.classifier = None
-        self.extra_proj = None
-        self.num_classes = num_classes
+
+        if extra_dim > 0:
+            self.extra_proj = nn.Sequential(
+                nn.Linear(extra_dim, in_features),
+                nn.BatchNorm1d(in_features),
+                nn.ReLU(inplace=True)
+            )
+            self.in_features = in_features * 2 
+        else:
+            self.extra_proj = None
+            self.in_features = in_features
+
+        self.classifier = nn.Linear(self.in_features, num_classes)
 
     def forward(self, x, extra_vec=None):
-        out = self.model_base(x)  
-        feat = out[0] if isinstance(out, (tuple, list)) else out  # (B, C)
-        C = feat.size(1)
-
-        # khởi tạo classifier/extra_proj lần đầu
-        if self.classifier is None:
-            if self.extra_dim > 0:
-                self.extra_proj = nn.Sequential(
-                    nn.Linear(self.extra_dim, C),
-                    nn.BatchNorm1d(C),
-                    nn.ReLU(inplace=True)
-                ).to(feat.device, feat.dtype)
-                in_features = 2 * C
-            else:
-                in_features = C
-            self.classifier = nn.Linear(in_features, self.num_classes).to(feat.device, feat.dtype)
+        feat = self.model_base(x)  # (B, in_features)
 
         if self.extra_proj is not None and extra_vec is not None:
-            extra_vec = extra_vec.to(feat.device, feat.dtype)
-            extra_feat = self.extra_proj(extra_vec)   # (B, C)
-            feat = torch.cat([feat, extra_feat], dim=1)  # (B, 2C)
+            extra_feat = self.extra_proj(extra_vec)  # (B, in_features)
+            feat = torch.cat([feat, extra_feat], dim=1)  # (B, 2*in_features)
 
-        return self.classifier(feat)
+        out = self.classifier(feat)
+        return out
 
 
-def build_model(num_classes: int, extra_dim: int = 0):
+def build_model(num_classes: int, extra_dim: int = 0, pretrained: bool = True):
     """
-    Build RADIO model + optional extra vector.
+    Build EfficientNet model + optional extra vector.
     """
-    return CustomModel(num_classes=num_classes, extra_dim=extra_dim)
+    return CustomModel(num_classes=num_classes, extra_dim=extra_dim, pretrained=pretrained)
