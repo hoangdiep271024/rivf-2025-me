@@ -39,7 +39,4 @@ class CustomModel(nn.Module):
 
 
 def build_model(num_classes: int, extra_dim: int = 0, pretrained: bool = True):
-    """
-    Build RADIO model + optional extra vector.
-    """
     return CustomModel(num_classes=num_classes, extra_dim=extra_dim, pretrained=pretrained)
