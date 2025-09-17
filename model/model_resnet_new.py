@@ -38,7 +38,7 @@ class CustomModel(nn.Module):
     def forward(self, x, extra_vec=None):
         features = self.model_base(x) 
 
-        if extra_vec is not None and extra_proj í not None:
+        if extra_vec is not None and extra_proj is not None:
             if extra_vec.dim() == 1:  
                 extra_vec = extra_vec.unsqueeze(0)
             if features.size(0) != extra_vec.size(0):
