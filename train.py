@@ -12,7 +12,7 @@ from torch.utils.data import DataLoader, WeightedRandomSampler
 from torch.utils.tensorboard import SummaryWriter
 
 from data import build_datasets_from_splits, compute_class_weights as compute_class_weights_from_data
-from model.model_resnet import build_model
+from model.model_vgg import build_model
 
 
 
@@ -204,7 +204,7 @@ def main(cfg: Config):
 
     # Model / Loss / Optim / Sched
     # model = LEARNet(num_classes=num_classes).to(device)
-    model = build_model(num_classes=num_classes, pretrained=True).to(device)
+    model = build_model(num_classes=num_classes, pretrained=True, extra_dim = 0).to(device)
 
     if cfg.use_class_weights:
         y_train = getattr(train_ds, "y")
@@ -244,10 +244,6 @@ def main(cfg: Config):
         # Save best + last
         if va_acc >= best_acc:
             best_acc = va_acc
-            best_path = outdir / f"best_{best_acc:.4f}.pth"
-            torch.save({"model": model.state_dict(),
-                        "classes": class_names,
-                        "config": asdict(cfg)}, best_path)
             torch.save({"model": model.state_dict(),
                     "classes": class_names,
                     "config": asdict(cfg)}, outdir / "best_last.pth")
@@ -258,13 +254,13 @@ def main(cfg: Config):
 
 
 if __name__ == "__main__":
-    base_dir = Path("./artifacts/casme_split")
+    base_dir = Path("./artifacts/samm_split")
     for fold in range(1, 6): 
         print(f"\n===== Training Fold {fold}/5 =====")
         cfg = Config(
             train_csv=str(base_dir / f"fold_{fold}/train.csv"),
             valid_csv=str(base_dir / f"fold_{fold}/valid.csv"),
-            images_dir="./media/CASMEV2/dynamic_images",
+            images_dir="./media/SAMM/dynamic_images",
             outdir=f"./artifacts/learnNetmodels/checkpoints/fold_{fold}",
             log_dir=f"./artifacts/learnNetmodels/logs/fold_{fold}",
             grayscale=False,

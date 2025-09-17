@@ -1,11 +1,46 @@
 import timm
+import torch
 import torch.nn as nn
 
 MODEL_NAME = "efficientnet_b1.ft_in1k"
 
-def build_model(num_classes: int, pretrained: bool = True):
-    model_base = timm.create_model(MODEL_NAME, pretrained=pretrained)
-    model_base.reset_classifier(num_classes)
+class CustomModel(nn.Module):
+    def __init__(self, num_classes: int, extra_dim: int = 0, pretrained: bool = True):
+        super().__init__()
+        # Backbone EfficientNet
+        self.model_base = timm.create_model(MODEL_NAME, pretrained=pretrained)
+        in_features = self.model_base.classifier.in_features
+        self.model_base.classifier = nn.Identity()
 
-    return model_base
+        self.backbone_dim = in_features
+        self.extra_dim = extra_dim
 
+        if extra_dim > 0:
+            self.extra_proj = nn.Sequential(
+                nn.Linear(extra_dim, in_features),
+                nn.BatchNorm1d(in_features),
+                nn.ReLU(inplace=True)
+            )
+            self.in_features = in_features * 2 
+        else:
+            self.extra_proj = None
+            self.in_features = in_features
+
+        self.classifier = nn.Linear(self.in_features, num_classes)
+
+    def forward(self, x, extra_vec=None):
+        feat = self.model_base(x)  # (B, in_features)
+
+        if self.extra_proj is not None and extra_vec is not None:
+            extra_feat = self.extra_proj(extra_vec)  # (B, in_features)
+            feat = torch.cat([feat, extra_feat], dim=1)  # (B, 2*in_features)
+
+        out = self.classifier(feat)
+        return out
+
+
+def build_model(num_classes: int, extra_dim: int = 0, pretrained: bool = True):
+    """
+    Build EfficientNet model + optional extra vector.
+    """
+    return CustomModel(num_classes=num_classes, extra_dim=extra_dim, pretrained=pretrained)

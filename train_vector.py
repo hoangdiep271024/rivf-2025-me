@@ -155,10 +155,10 @@ def train_one_epoch(model, criterion, optimizer, loader, device):
         if len(batch) == 3:
             xb, vb, yb = batch
             vb = vb.to(device, non_blocking=True)
-            out, _ = model(xb.to(device, non_blocking=True), extra_vec=vb)
+            out = model(xb.to(device, non_blocking=True), extra_vec=vb)
         else:
             xb, yb = batch
-            out, _ = model(xb.to(device, non_blocking=True))
+            out = model(xb.to(device, non_blocking=True))
 
         yb = yb.to(device, non_blocking=True)
 
@@ -184,11 +184,11 @@ def evaluate(model, criterion, loader, device):
             xb, vb, yb = batch
             xb = xb.to(device, non_blocking=True)
             vb = vb.to(device, non_blocking=True)
-            out, _ = model(xb, extra_vec=vb)
+            out = model(xb, extra_vec=vb)
         else:
             xb, yb = batch
             xb = xb.to(device, non_blocking=True)
-            out, _ = model(xb)
+            out = model(xb)
 
         yb = yb.to(device, non_blocking=True)
         loss = criterion(out, yb)
@@ -278,16 +278,16 @@ def main(cfg: Config):
 
 
 if __name__ == "__main__":
-    base_dir = Path("./artifacts/casme_split")
+    base_dir = Path("./artifacts/samm_split")
     for fold in range(1, 6): 
         print(f"\n===== Training Fold {fold}/5 =====")
         cfg = Config(
             train_csv=str(base_dir / f"fold_{fold}/train.csv"),
             valid_csv=str(base_dir / f"fold_{fold}/valid.csv"),
-            images_dir="./media/CASMEV2/dynamic_images",
+            images_dir="./media/SAMM/dynamic_images",
             outdir=f"./artifacts/learnNetmodels/checkpoints/fold_{fold}",
             log_dir=f"./artifacts/learnNetmodels/logs/fold_{fold}",
-            npy_dir="./SMIRK_vector/CASME_SMIRK_gaussian",
+            npy_dir="./SMIRK_vector/SAMM_SMIRK_gaussian_apex",
             grayscale=False,
             input_size=224,
             num_workers=4,
