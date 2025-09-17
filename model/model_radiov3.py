@@ -11,13 +11,7 @@ class CustomModel(nn.Module):
             'NVlabs/RADIO', 'radio_model',
             version=MODEL_NAME, progress=True, skip_validation=True, pretrained=pretrained
         )
-
-        # chạy thử một dummy input để lấy output dim
-        with torch.no_grad():
-            dummy = torch.zeros(1, 3, 224, 224)
-            out = self.model_base(dummy)
-            feat = out[0] if isinstance(out, (tuple, list)) else out
-        in_features = feat.size(1)
+        in_features = 2304  
 
         self.extra_dim = extra_dim
         if extra_dim > 0:
@@ -35,11 +29,11 @@ class CustomModel(nn.Module):
 
     def forward(self, x, extra_vec=None):
         out = self.model_base(x)
-        feat = out[0] if isinstance(out, (tuple, list)) else out  # (B, in_features)
+        feat = out[0] if isinstance(out, (tuple, list)) else out  # (B, 2304)
 
         if self.extra_proj is not None and extra_vec is not None:
-            extra_feat = self.extra_proj(extra_vec)  # (B, in_features)
-            feat = torch.cat([feat, extra_feat], dim=1)  # (B, 2*in_features)
+            extra_feat = self.extra_proj(extra_vec)  # (B, 2304)
+            feat = torch.cat([feat, extra_feat], dim=1)  # (B, 4608)
 
         return self.classifier(feat)
 
