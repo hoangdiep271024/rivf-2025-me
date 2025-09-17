@@ -2,91 +2,85 @@ import torch
 import torch.nn as nn
 from transformers import AutoModel
 
+MODEL_NAME = "facebook/dinov3-vitb16-pretrain-lvd1689m"
 
-# CNN classifier của bạn
-import torch
-import torch.nn as nn
+class DinoBackbone(nn.Module):
+    def __init__(self, model_name: str = MODEL_NAME, freeze: bool = True):
+        super().__init__()
+        self.model = AutoModel.from_pretrained(model_name)
+        self.hidden_size = int(getattr(self.model.config, "hidden_size", 768))
 
-class Moderu_cnn(nn.Module):
-    def __init__(self, in_channels=3, num_classes=5):
+        self.freeze = freeze
+        if self.freeze:
+            for p in self.model.parameters():
+                p.requires_grad = False
+            self.model.eval()
+
+    def forward(self, pixel_values: torch.Tensor) -> torch.Tensor:
+        if self.freeze:
+            with torch.no_grad():
+                out = self.model(pixel_values=pixel_values)
+        else:
+            out = self.model(pixel_values=pixel_values)
+
+        pooled = getattr(out, "pooler_output", None)
+        if pooled is None:
+            pooled = out.last_hidden_state[:, 0]  # CLS
+        return pooled  # (B, hidden_size)
+
+
+class CustomModel(nn.Module):
+    def __init__(self, num_classes: int, extra_dim: int = 0,
+                 pretrained: bool = True, 
+                 freeze_backbone: bool = True,
+                 model_name: str = MODEL_NAME):
         super().__init__()
 
-        self.conv1 = nn.Sequential(
-            nn.Conv2d(in_channels, 32, 3, 1, padding="same"),
-            nn.BatchNorm2d(32),
-            nn.ReLU(),
-            nn.MaxPool2d(2)
-        )
-        self.conv2 = nn.Sequential(
-            nn.Conv2d(32, 64, 3, 1, padding="same"),
-            nn.BatchNorm2d(64),
-            nn.ReLU(),
-            nn.MaxPool2d(2)
-        )
-        self.conv3 = nn.Sequential(
-            nn.Conv2d(64, 128, 3, 1, padding="same"),
-            nn.BatchNorm2d(128),
-            nn.ReLU(),
-            nn.MaxPool2d(2)
-        )
-        self.conv4 = nn.Sequential(
-            nn.Conv2d(128, 256, 3, 1, padding="same"),
-            nn.BatchNorm2d(256),
-            nn.ReLU(),
-            nn.MaxPool2d(2)
-        )
+        # Backbone DINOv3
+        self.model_base = DinoBackbone(model_name=model_name, freeze=freeze_backbone)
+        in_features = self.model_base.hidden_size 
 
-        # Global Average Pooling
-        self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
-        self.flatten = nn.Flatten()
+        self.extra_dim = extra_dim
+        if extra_dim > 0:
+            self.extra_proj = nn.Sequential(
+                nn.Linear(extra_dim, in_features),
+                nn.BatchNorm1d(in_features),
+                nn.ReLU(inplace=True)
+            )
+            self.in_features = in_features * 2
+        else:
+            self.extra_proj = None
+            self.in_features = in_features
 
-        self.fc1 = nn.Sequential(
-            nn.Dropout(0.3),
-            nn.Linear(256, 256),
-            nn.ReLU()
-        )
-        self.fc2 = nn.Linear(256, num_classes)
+        self.classifier = nn.Linear(self.in_features, num_classes)
 
-    def forward(self, x):
-        x = self.conv1(x)  
-        x = self.conv2(x)  
-        x = self.conv3(x) 
-        x = self.conv4(x) 
-        x = self.avgpool(x)  
-        x = self.flatten(x)
-        x = self.fc1(x)
-        x = self.fc2(x)
-        return x
+    def extract_backbone_feature(self, pixel_values: torch.Tensor) -> torch.Tensor:
+        """Trả feature từ backbone: (B, in_features)."""
+        return self.model_base(pixel_values)  # (B, 768)
+
+    def forward(self, pixel_values: torch.Tensor, extra_vec: torch.Tensor = None,
+                return_features: bool = False):
+        feat = self.extract_backbone_feature(pixel_values)  # (B, 768)
+
+        if self.extra_proj is not None and extra_vec is not None:
+            extra_feat = self.extra_proj(extra_vec)          # (B, 768)
+            feat = torch.cat([feat, extra_feat], dim=1)      # (B, 1536)
+
+        if return_features:
+            return feat  # fused feature
+
+        out = self.classifier(feat)
+        return out
 
 
-
-
-# Ghép DINOv3 backbone + CNN classifier
-class DinoWithCNN(nn.Module):
-    def __init__(self, num_classes: int, pretrained_model_name: str = "facebook/dinov3-vitb16-pretrain-lvd1689m"):
-        super().__init__()
-        self.backbone = AutoModel.from_pretrained(pretrained_model_name)
-        for param in self.backbone.parameters():
-            param.requires_grad = False
-        self.backbone.eval()
-        hidden_size = self.backbone.config.hidden_size  # thường = 768
-        assert hidden_size == 768, f"Hiện code chỉ support hidden_size=768, nhưng model backbone trả về {hidden_size}"
-        self.reshape_dims = (3, 16, 16)
-        assert torch.prod(torch.tensor(self.reshape_dims)) == hidden_size
-
-        # CNN classifier
-        self.cnn_classifier = Moderu_cnn(in_channels=3, num_classes=num_classes)
-
-    def forward(self, pixel_values):
-        outputs = self.backbone(pixel_values=pixel_values)
-        cls_feature = outputs.last_hidden_state[:, 0]  # (B, 768)
-
-        # reshape -> (B, 3, 16, 16)
-        x = cls_feature.view(cls_feature.size(0), *self.reshape_dims)
-
-        logits = self.cnn_classifier(x)
-        return logits
-
-
-def build_model(num_classes: int):
-    return DinoWithCNN(num_classes=num_classes)
+def build_model(num_classes: int, extra_dim: int = 0,
+                pretrained: bool = True,
+                freeze_backbone: bool = True,
+                model_name: str = MODEL_NAME):
+    return CustomModel(
+        num_classes=num_classes,
+        extra_dim=extra_dim,
+        pretrained=pretrained,
+        freeze_backbone=freeze_backbone,
+        model_name=model_name,
+    )
