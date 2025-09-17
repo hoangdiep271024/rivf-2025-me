@@ -278,16 +278,16 @@ def main(cfg: Config):
 
 
 if __name__ == "__main__":
-    base_dir = Path("./artifacts/samm_split")
+    base_dir = Path("./artifacts/casme_split")
     for fold in range(1, 6): 
         print(f"\n===== Training Fold {fold}/5 =====")
         cfg = Config(
             train_csv=str(base_dir / f"fold_{fold}/train.csv"),
             valid_csv=str(base_dir / f"fold_{fold}/valid.csv"),
-            images_dir="./media/SAMM/dynamic_images",
+            images_dir="./media/CASME/dynamic_images",
             outdir=f"./artifacts/learnNetmodels/checkpoints/fold_{fold}",
             log_dir=f"./artifacts/learnNetmodels/logs/fold_{fold}",
-            npy_dir="./SMIRK_vector/SAMM_SMIRK_gaussian_apex",
+            npy_dir="./SMIRK_vector/CASME_SMIRK_gaussian_cutout",
             grayscale=False,
             input_size=224,
             num_workers=4,
