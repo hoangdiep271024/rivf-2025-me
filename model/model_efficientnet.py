@@ -17,11 +17,10 @@ class CustomModel(nn.Module):
 
         if extra_dim > 0:
             self.extra_proj = nn.Sequential(
-                nn.Linear(extra_dim, in_features),
-                nn.BatchNorm1d(in_features),
+                nn.BatchNorm1d(extra_dim),
                 nn.ReLU(inplace=True)
             )
-            self.in_features = in_features * 2 
+            self.in_features = in_features + extra_dim 
         else:
             self.extra_proj = None
             self.in_features = in_features
@@ -33,7 +32,7 @@ class CustomModel(nn.Module):
 
         if self.extra_proj is not None and extra_vec is not None:
             extra_feat = self.extra_proj(extra_vec)  # (B, in_features)
-            feat = torch.cat([feat, extra_feat], dim=1)  # (B, 2*in_features)
+            feat = torch.cat([feat, extra_feat], dim=1) 
 
         out = self.classifier(feat)
         return out
