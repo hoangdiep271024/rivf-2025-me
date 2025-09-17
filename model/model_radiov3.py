@@ -1,114 +1,88 @@
 import torch
 import torch.nn as nn
-import math
 
-class ModeruCNN(nn.Module):
-    def __init__(self, in_channels=768, num_classes=5, patch_grid: tuple = None):
+MODEL_NAME = "c-radio_v3-b"  
+class RadioBackbone(nn.Module):
+    def __init__(self, model_name: str = MODEL_NAME, freeze: bool = True, summary_dim: int = 768):
         super().__init__()
-        self.patch_grid = patch_grid
-
-        self.conv1 = nn.Sequential(
-            nn.Conv2d(in_channels, 32, 3, 1, padding="same"),
-            nn.BatchNorm2d(32),
-            nn.ReLU(),
-            nn.MaxPool2d(2)
+        self.model = torch.hub.load(
+            'NVlabs/RADIO', 'radio_model',
+            version=model_name, progress=True, skip_validation=True
         )
-        self.conv2 = nn.Sequential(
-            nn.Conv2d(32, 64, 3, 1, padding="same"),
-            nn.BatchNorm2d(64),
-            nn.ReLU(),
-            nn.MaxPool2d(2)
-        )
-        self.conv3 = nn.Sequential(
-            nn.Conv2d(64, 128, 3, 1, padding="same"),
-            nn.BatchNorm2d(128),
-            nn.ReLU(),
-            nn.MaxPool2d(2)
-        )
-        self.conv4 = nn.Sequential(
-            nn.Conv2d(128, 256, 3, 1, padding="same"),
-            nn.BatchNorm2d(256),
-            nn.ReLU(),
-        )
+        self.hidden_size = summary_dim 
+        self.freeze = freeze
+        if self.freeze:
+            for p in self.model.parameters():
+                p.requires_grad = False
+            self.model.eval()
 
-        self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
-        self.flatten = nn.Flatten()
-
-        self.fc1 = nn.Sequential(
-            nn.Dropout(0.3),
-            nn.Linear(256, 256),
-            nn.ReLU()
-        )
-        self.fc2 = nn.Linear(256, num_classes)
-
-    def forward(self, x):
-        """
-        x: patch features từ RADIO, shape (B, N, D)
-        """
-        if x.dim() == 2:
-            x = x.unsqueeze(1)  
-
-        B, N, D = x.shape
-        if self.patch_grid is not None:
-            h, w = self.patch_grid
-            assert h * w == N, f"patch_grid {self.patch_grid} không khớp với N={N}"
+    def forward(self, pixel_values: torch.Tensor) -> torch.Tensor:
+        if self.freeze:
+            with torch.no_grad():
+                out = self.model(pixel_values)
         else:
-            h = int(math.sqrt(N))
-            while N % h != 0:
-                h -= 1
-            w = N // h
-
-        x = x.transpose(1, 2).reshape(B, D, h, w)
-
-        # CNN
-        x = self.conv1(x)
-        x = self.conv2(x)
-        x = self.conv3(x)
-        x = self.conv4(x)
-
-        x = self.avgpool(x)
-        x = self.flatten(x)
-        x = self.fc1(x)
-        x = self.fc2(x)
-        return x
+            out = self.model(pixel_values)
+        # RADIO trả (summary, spatial); lấy summary: (B, C)
+        if isinstance(out, (tuple, list)) and len(out) >= 1:
+            return out[0]
+        if isinstance(out, torch.Tensor) and out.dim() == 2:
+            return out
+        raise ValueError("Không lấy được summary (kỳ vọng outputs[0] có shape (B, C)).")
 
 
-class RadioWithCNN(nn.Module):
-    def __init__(self, num_classes: int, freeze_backbone: bool = True, patch_grid: tuple = None):
+class CustomModel(nn.Module):
+    def __init__(self, num_classes: int, extra_dim: int = 0,
+                 pretrained: bool = True,        
+                 freeze_backbone: bool = True,
+                 model_name: str = MODEL_NAME,
+                 summary_dim: int = 768):
         super().__init__()
-        self.backbone = torch.hub.load(
-            'NVlabs/RADIO',
-            'radio_model',
-            version="c-radio_v3-b",
-            progress=True,
-            skip_validation=True
-        )
 
-        hidden_size = 768 
-        self.patch_grid = patch_grid
+        # Backbone RADIO (summary)
+        self.model_base = RadioBackbone(model_name=model_name, freeze=freeze_backbone, summary_dim=summary_dim)
+        in_features = self.model_base.hidden_size
 
-        if freeze_backbone:
-            for param in self.backbone.parameters():
-                param.requires_grad = False
-        self.backbone.eval()
-        self.cnn_classifier = ModeruCNN(
-            in_channels=hidden_size,
-            num_classes=num_classes,
-            patch_grid=patch_grid
-        )
-
-    def forward(self, pixel_values):
-        outputs = self.backbone(pixel_values)
-        if hasattr(outputs, "__getitem__") and len(outputs) > 1:
-            patch_features = outputs[1]  
+        self.extra_dim = extra_dim
+        if extra_dim > 0:
+            self.extra_proj = nn.Sequential(
+                nn.Linear(extra_dim, in_features),
+                nn.BatchNorm1d(in_features),
+                nn.ReLU(inplace=True)
+            )
+            self.in_features = in_features * 2
         else:
-            raise ValueError("Không tìm thấy patch features từ RADIO output")
+            self.extra_proj = None
+            self.in_features = in_features
 
-        logits = self.cnn_classifier(patch_features)
-        return logits
+        self.classifier = nn.Linear(self.in_features, num_classes)
+
+    def extract_backbone_feature(self, pixel_values: torch.Tensor) -> torch.Tensor:
+        return self.model_base(pixel_values)  # (B, C)
+
+    def forward(self, pixel_values: torch.Tensor, extra_vec: torch.Tensor = None,
+                return_features: bool = False):
+        feat = self.extract_backbone_feature(pixel_values)  # (B, C)
+
+        if self.extra_proj is not None and extra_vec is not None:
+            extra_feat = self.extra_proj(extra_vec)          # (B, C)
+            feat = torch.cat([feat, extra_feat], dim=1)      # (B, 2C)
+
+        if return_features:
+            return feat
+
+        return self.classifier(feat)
 
 
-def build_model(num_classes: int, freeze_backbone: bool = True, patch_grid: tuple = None):
-    return RadioWithCNN(num_classes=num_classes, freeze_backbone=freeze_backbone, patch_grid=patch_grid)
-
-
+def build_model(num_classes: int, extra_dim: int = 0,
+                pretrained: bool = True,
+                freeze_backbone: bool = True,
+                model_name: str = MODEL_NAME,
+                summary_dim: int = 768):
+    return CustomModel(
+        num_classes=num_classes,
+        extra_dim=extra_dim,
+        pretrained=pretrained,
+        freeze_backbone=freeze_backbone,
+        model_name=model_name,
+        summary_dim=summary_dim,
+    )
