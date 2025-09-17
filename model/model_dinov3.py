@@ -25,7 +25,7 @@ class DinoBackbone(nn.Module):
 
         pooled = getattr(out, "pooler_output", None)
         if pooled is None:
-            pooled = out.last_hidden_state[:, 0]  # CLS
+            pooled = out.last_hidden_state[:, 0]  
         return pooled  # (B, hidden_size)
 
 
