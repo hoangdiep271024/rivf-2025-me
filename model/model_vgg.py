@@ -20,11 +20,10 @@ class CustomDenseNet(nn.Module):
 
         if extra_dim > 0:
             self.extra_proj = nn.Sequential(
-                nn.Linear(extra_dim, in_features),
-                nn.BatchNorm1d(in_features),
+                nn.BatchNorm1d(extra_dim),
                 nn.ReLU(inplace=True)
             )
-            self.in_features = in_features * 2
+            self.in_features = in_features + extra_dim
         else:
             self.extra_proj = None
             self.in_features = in_features
