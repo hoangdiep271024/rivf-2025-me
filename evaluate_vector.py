@@ -183,7 +183,7 @@ def run_eval(cfg: Config):
         yb = yb.to(device, non_blocking=True)
         
         # Model cần cả image và vector
-        logits, _ = model(xb, extra_vec=vb)
+        logits = model(xb, extra_vec=vb)
         preds = logits.argmax(1)
         
         all_logits.append(logits.cpu())
@@ -249,7 +249,7 @@ if __name__ == "__main__":
             batch_size=32,
             num_workers=4,
             seed=42,
-            npy_dir = "SMIRK_vector/SAMM_SMIRK_gaussian"
+            npy_dir = "SMIRK_vector/SAMM_SMIRK_gaussian_apex"
         )
         print(f"=== Running eval for fold {fold} ===")
         run_eval(cfg)
