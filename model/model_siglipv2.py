@@ -8,7 +8,8 @@ class CustomModel(nn.Module):
     def __init__(self, num_classes: int, extra_dim: int = 0, model_name: str = MODEL_NAME):
         super().__init__()
         self.model_base = SiglipVisionModel.from_pretrained(model_name)
-        in_features = self.model_base.config.vision_config.hidden_size
+        in_features = self.model_base.config.hidden_size
+
 
         self.extra_dim = extra_dim
         if extra_dim > 0:
