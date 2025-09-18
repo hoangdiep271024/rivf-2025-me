@@ -7,9 +7,9 @@ MODEL_NAME = "google/siglip2-base-patch16-224"
 class CustomModel(nn.Module):
     def __init__(self, num_classes: int, extra_dim: int = 0, model_name: str = MODEL_NAME):
         super().__init__()
+        # Backbone SigLIP (vision-only)
         self.model_base = SiglipVisionModel.from_pretrained(model_name)
-        in_features = self.model_base.config.hidden_size
-
+        in_features = self.model_base.config.hidden_size  # hidden dim
 
         self.extra_dim = extra_dim
         if extra_dim > 0:
@@ -26,11 +26,11 @@ class CustomModel(nn.Module):
 
     def forward(self, pixel_values: torch.Tensor, extra_vec: torch.Tensor = None):
         outputs = self.model_base(pixel_values=pixel_values)
-        feat = outputs.image_embeds  # (B, in_features)
+        feat = outputs.pooler_output  # (B, hidden_size)
 
         if self.extra_proj is not None and extra_vec is not None:
-            extra_feat = self.extra_proj(extra_vec)       # (B, in_features)
-            feat = torch.cat([feat, extra_feat], dim=1) 
+            extra_feat = self.extra_proj(extra_vec)        # (B, hidden_size)
+            feat = torch.cat([feat, extra_feat], dim=1)    # (B, 2*hidden_size)
 
         return self.classifier(feat)
 
