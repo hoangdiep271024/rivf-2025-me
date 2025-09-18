@@ -15,7 +15,7 @@ from sklearn.metrics import (
     precision_recall_fscore_support,
 )
 
-from model.model_dinov3 import build_model
+from model.model_radiov3 import build_model
 # We’ll import your dataset + transforms so we can inject the checkpoint's LabelEncoder
 from data_vector import CASMECSVDataset, build_transforms
 
@@ -154,7 +154,7 @@ def run_eval(cfg: Config):
     num_classes = len(classes)
 
     # 2) Build model and load weights - THÊM extra_dim=53
-    model = build_model(num_classes=num_classes, extra_dim=53).to(device)
+    model = build_model(num_classes=num_classes, extra_dim=353).to(device)
     model.load_state_dict(ckpt["model"], strict=True)
     model.eval()
 
@@ -249,7 +249,7 @@ if __name__ == "__main__":
             batch_size=32,
             num_workers=4,
             seed=42,
-            npy_dir = "./SMIRK_vector/CASME_SMIRK_gaussian"
+            npy_dir = "./SMIRK_vector/CASME_SMIRK_gaussian_shape"
         )
         print(f"=== Running eval for fold {fold} ===")
         run_eval(cfg)
