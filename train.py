@@ -204,7 +204,7 @@ def main(cfg: Config):
 
     # Model / Loss / Optim / Sched
     # model = LEARNet(num_classes=num_classes).to(device)
-    model = build_model(num_classes=num_classes, pretrained=True, extra_dim = 0).to(device)
+    model = build_model(num_classes=num_classes, extra_dim = 0).to(device)
 
     if cfg.use_class_weights:
         y_train = getattr(train_ds, "y")
