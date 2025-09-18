@@ -1,13 +1,13 @@
 import torch
 import torch.nn as nn
-from transformers import AutoModel
+from transformers import AutoModelForVision
 
 MODEL_NAME = "google/siglip2-base-patch16-224"
 
 class CustomModel(nn.Module):
     def __init__(self, num_classes: int, extra_dim: int = 0, model_name: str = MODEL_NAME):
         super().__init__()
-        self.model_base = AutoModel.from_pretrained(model_name)
+        self.model_base = AutoModelForVision.from_pretrained(model_name)
         in_features = self.model_base.config.vision_config.hidden_size
 
         self.extra_dim = extra_dim
