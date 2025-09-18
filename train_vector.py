@@ -287,7 +287,7 @@ if __name__ == "__main__":
             images_dir="./media/SAMM/dynamic_images",
             outdir=f"./artifacts/learnNetmodels/checkpoints/fold_{fold}",
             log_dir=f"./artifacts/learnNetmodels/logs/fold_{fold}",
-            npy_dir="./SMIRK_vector/SAMM_SMIRK_gaussian_shape",
+            npy_dir="./SMIRK_vector/SAMM_SMIRK_mean_shape",
             grayscale=False,
             input_size=224,
             num_workers=4,
