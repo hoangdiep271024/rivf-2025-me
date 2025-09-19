@@ -15,8 +15,7 @@ from sklearn.metrics import (
     precision_recall_fscore_support,
 )
 
-from model.model_dinov3 import build_model
-# We’ll import your dataset + transforms so we can inject the checkpoint's LabelEncoder
+from model.model_resnet_new import build_model
 from data_vector import CASMECSVDataset, build_transforms
 
 # -------------------- Config --------------------
@@ -101,7 +100,8 @@ def _build_valid_dataset(cfg: Config, classes_from_ckpt: list) -> CASMECSVDatase
         transform=tf,
         target_size=(cfg.input_size, cfg.input_size),
         drop_missing=True,
-        npy_dir=cfg.npy_dir,  # QUAN TRỌNG: validation không dùng vector npy
+        npy_dir=cfg.npy_dir,
+        is_train=False
     )
     return ds
 
@@ -249,7 +249,7 @@ if __name__ == "__main__":
             batch_size=32,
             num_workers=4,
             seed=42,
-            npy_dir = "./SMIRK_vector/SAMM_SMIRK_mean_shape"
+            npy_dir = "./SMIRK_vector/SAMM_SMIRK_gaussian_shape"
         )
         print(f"=== Running eval for fold {fold} ===")
         run_eval(cfg)

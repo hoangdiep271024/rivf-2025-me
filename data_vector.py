@@ -52,6 +52,22 @@ def make_balanced_loader(ds, batch_size=32, num_workers=4, balance=True):
     return DataLoader(ds, batch_size=batch_size, sampler=sampler,
                       num_workers=num_workers, pin_memory=True)
 
+def augment_shape_two_versions(vec, mask_ratio=0.1, rand_range=(-1, 1)):
+    aug1 = vec.copy()
+    aug2 = vec.copy()
+
+    # aug1 : random mask một số chiều shape = 0
+    shape1 = aug1[0, 53:353]
+    n_mask = int(len(shape1) * mask_ratio)
+    idx_mask = np.random.choice(len(shape1), n_mask, replace=False)
+    shape1[idx_mask] = 0.0
+    aug1[0, 53:353] = shape1
+
+    # aug2 : random toàn bộ shape trong khoảng [-0.5, 0.5]
+    shape2 = np.random.uniform(rand_range[0], rand_range[1], size=(300,))
+    aug2[0, 53:353] = shape2
+
+    return aug2
 # ---------- your augmentation ----------
 class StepRotation:
     def __init__(self, degrees: Tuple[int,int]=(-45,45), step: int=15):
@@ -79,22 +95,24 @@ def build_transforms(grayscale=True, train=True, target_size=(112,112)):
 # ---------- Dataset ----------
 class CASMECSVDataset(Dataset):
     def __init__(
-        self,
-        df: pd.DataFrame,
-        images_dir: str,
-        label_encoder: LabelEncoder,
-        grayscale: bool = True,
-        transform: Optional[Callable] = None,
-        target_size: Tuple[int,int] = (112,112),
-        drop_missing: bool = True,
-        npy_dir: Optional[str] = None,  
-    ):
+    self,
+    df: pd.DataFrame,
+    images_dir: str,
+    label_encoder: LabelEncoder,
+    grayscale: bool = True,
+    transform: Optional[Callable] = None,
+    target_size: Tuple[int,int] = (112,112),
+    drop_missing: bool = True,
+    npy_dir: Optional[str] = None,  
+    is_train: bool = True, 
+):
         self.images_dir = Path(images_dir)
         self.npy_dir = Path(npy_dir) if npy_dir else None
         self.grayscale = grayscale
         self.transform = transform or build_transforms(grayscale=grayscale, train=True, target_size=target_size)
         self.drop_missing = drop_missing
         self.le = label_encoder
+        self.is_train = is_train
 
         labels_str = df["label"].astype("string").str.strip().str.split().str[0].fillna("")
         samples, missing = [], 0
@@ -134,9 +152,11 @@ class CASMECSVDataset(Dataset):
 
         if path_npy is not None and path_npy.exists():
             vec = np.load(path_npy)
+            if self.is_train:
+                vec = augment_shape_two_versions(vec)
             vec = torch.tensor(vec, dtype=torch.float32).squeeze(0)
         else:
-            vec = torch.zeros((53,), dtype=torch.float32)  # valid dùng vector 0
+            vec = torch.zeros((353,), dtype=torch.float32)  # valid dùng vector 0
 
         y = int(self.le.transform([lab_str])[0])
         return x, vec, y
@@ -174,9 +194,11 @@ def build_datasets_from_splits(
         grayscale=grayscale,
         transform=train_tf,
         target_size=target_size,
-        npy_dir=npy_dir,    # train cần vector
+        npy_dir=npy_dir,  
         drop_missing=True,
+        is_train=True,  
     )
+    
 
     # Valid dataset KHÔNG có vector npy
     valid_ds = CASMECSVDataset(
@@ -186,8 +208,9 @@ def build_datasets_from_splits(
         grayscale=grayscale,
         transform=valid_tf,
         target_size=target_size,
-        npy_dir=npy_dir,       # bỏ vector
-        drop_missing=True,  # nếu ảnh có thì giữ
+        npy_dir=npy_dir,       
+        drop_missing=True,
+        is_train=False,  
     )
 
     meta = {
