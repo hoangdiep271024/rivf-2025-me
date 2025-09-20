@@ -52,22 +52,26 @@ def make_balanced_loader(ds, batch_size=32, num_workers=4, balance=True):
     return DataLoader(ds, batch_size=batch_size, sampler=sampler,
                       num_workers=num_workers, pin_memory=True)
 
-def augment_shape_two_versions(vec, mask_ratio=0.1, rand_range=(-1, 1)):
+def augment_shape_two_versions(vec, drop_ratio=0.2, rand_range=(-1, 1)):
+    """
+    vec: numpy array shape (1,353)
+    return: aug đều có shape (1,353)
+    """
     aug1 = vec.copy()
     aug2 = vec.copy()
 
-    # aug1 : random mask một số chiều shape = 0
-    shape1 = aug1[0, 53:353]
-    n_mask = int(len(shape1) * mask_ratio)
-    idx_mask = np.random.choice(len(shape1), n_mask, replace=False)
-    shape1[idx_mask] = 0.0
-    aug1[0, 53:353] = shape1
+    # aug1 : random drop toàn bộ vector ( expr + jaw + shape )
+    vec1 = aug1[0, :]
+    n_drop = int(len(vec1) * drop_ratio)
+    idx_drop = np.random.choice(len(vec1), n_drop, replace=False)
+    vec1[idx_drop] = -1.5
+    aug1[0, :] = vec1
 
-    # aug2 : random toàn bộ shape trong khoảng [-0.5, 0.5]
+    # aug2 : random toàn bộ shape trong khoảng rand_range
     shape2 = np.random.uniform(rand_range[0], rand_range[1], size=(300,))
     aug2[0, 53:353] = shape2
 
-    return aug2
+    return aug1
 # ---------- your augmentation ----------
 class StepRotation:
     def __init__(self, degrees: Tuple[int,int]=(-45,45), step: int=15):
