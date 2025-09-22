@@ -64,7 +64,7 @@ def augment_shape_two_versions(vec, drop_ratio=0.2, rand_range=(-1, 1)):
     vec1 = aug1[0, :]
     n_drop = int(len(vec1) * drop_ratio)
     idx_drop = np.random.choice(len(vec1), n_drop, replace=False)
-    vec1[idx_drop] = -1
+    vec1[idx_drop] = -0.5
     aug1[0, :] = vec1
 
     # aug2 : random toàn bộ shape trong khoảng rand_range
