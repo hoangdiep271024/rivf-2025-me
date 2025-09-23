@@ -52,7 +52,7 @@ def make_balanced_loader(ds, batch_size=32, num_workers=4, balance=True):
     return DataLoader(ds, batch_size=batch_size, sampler=sampler,
                       num_workers=num_workers, pin_memory=True)
 
-def augment_shape_two_versions(vec, drop_ratio=0.2, rand_range=(-1, 1)):
+def augment_shape_two_versions(vec, drop_ratio=0.1, rand_range=(-1, 1)):
     """
     vec: numpy array shape (1,353)
     return: aug đều có shape (1,353)
