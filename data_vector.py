@@ -61,7 +61,7 @@ def make_balanced_loader(ds, batch_size=32, num_workers=4, balance=True):
 #     aug1[0, :] = vec1
 #     return aug1
 
-def augment_shape_two_versions(vec, drop_ratio=0.3):
+def augment_shape_two_versions(vec, drop_ratio=0.2):
     """
     vec: numpy array shape (1,353)
     return: augmented version cùng shape (1,353)
@@ -85,7 +85,7 @@ def augment_shape_two_versions(vec, drop_ratio=0.3):
         elif idx in jaw_idx:
             vec1[idx] = jaw_mean
         elif idx in shape_idx:
-            vec1[idx] = shape_mean
+            vec1[idx] = 0
 
     aug[0, :] = vec1
     return aug
