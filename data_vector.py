@@ -61,9 +61,7 @@ def make_balanced_loader(ds, batch_size=32, num_workers=4, balance=True):
 #     aug1[0, :] = vec1
 #     return aug1
 
-import numpy as np
-
-def augment_shape_two_versions(vec, drop_ratio=0.1):
+def augment_shape_two_versions(vec, drop_ratio=0.3):
     """
     vec: numpy array shape (1,353)
     return: augmented version cùng shape (1,353)
