@@ -32,7 +32,7 @@ class CustomModel(nn.Module):
 
         if self.extra_proj is not None and extra_vec is not None:
             extra_feat = self.extra_proj(extra_vec)  # (B, 2304)
-            feat = torch.cat([feat, extra_feat], dim=1)  # (B, 4608)
+            feat = torch.cat([feat, extra_feat], dim=1)  
 
         return self.classifier(feat)
 

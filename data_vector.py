@@ -52,27 +52,47 @@ def make_balanced_loader(ds, batch_size=32, num_workers=4, balance=True):
     return DataLoader(ds, batch_size=batch_size, sampler=sampler,
                       num_workers=num_workers, pin_memory=True)
 
-def augment_shape_two_versions(vec, drop_ratio=0.1, rand_range=(-1, 1)):
+# def augment_shape_two_versions(vec, drop_ratio=0.2, rand_range=(-1, 1)):
+#     aug1 = vec.copy()
+#     vec1 = aug1[0, :]
+#     n_drop = int(len(vec1) * drop_ratio)
+#     idx_drop = np.random.choice(len(vec1), n_drop, replace=False)
+#     vec1[idx_drop] = -0.5
+#     aug1[0, :] = vec1
+#     return aug1
+
+import numpy as np
+
+def augment_shape_two_versions(vec, drop_ratio=0.1):
     """
     vec: numpy array shape (1,353)
-    return: aug đều có shape (1,353)
+    return: augmented version cùng shape (1,353)
     """
-    aug1 = vec.copy()
-    aug2 = vec.copy()
-
-    # aug1 : random drop toàn bộ vector ( expr + jaw + shape )
-    vec1 = aug1[0, :]
+    aug = vec.copy()
+    vec1 = aug[0, :]
+    expr_idx  = np.arange(0, 50)      # 0-49
+    jaw_idx   = np.arange(50, 53)     # 50-52
+    shape_idx = np.arange(53, 353)    # 53-352
+    
+    expr_mean  = vec1[expr_idx].mean()
+    jaw_mean   = vec1[jaw_idx].mean()
+    shape_mean = vec1[shape_idx].mean()
+    
     n_drop = int(len(vec1) * drop_ratio)
     idx_drop = np.random.choice(len(vec1), n_drop, replace=False)
-    vec1[idx_drop] = -0.5
-    aug1[0, :] = vec1
 
-    # aug2 : random toàn bộ shape trong khoảng rand_range
-    shape2 = np.random.uniform(rand_range[0], rand_range[1], size=(300,))
-    aug2[0, 53:353] = shape2
+    for idx in idx_drop:
+        if idx in expr_idx:
+            vec1[idx] = expr_mean
+        elif idx in jaw_idx:
+            vec1[idx] = jaw_mean
+        elif idx in shape_idx:
+            vec1[idx] = shape_mean
 
-    return aug1
-# ---------- your augmentation ----------
+    aug[0, :] = vec1
+    return aug
+
+
 class StepRotation:
     def __init__(self, degrees: Tuple[int,int]=(-45,45), step: int=15):
         self.deg, self.step = degrees, step
