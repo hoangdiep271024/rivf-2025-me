@@ -85,7 +85,7 @@ def augment_shape_two_versions(vec, drop_ratio=0.2):
         elif idx in jaw_idx:
             vec1[idx] = jaw_mean
         elif idx in shape_idx:
-            vec1[idx] = -1.5
+            vec1[idx] = -0.5
 
     aug[0, :] = vec1
     return aug
