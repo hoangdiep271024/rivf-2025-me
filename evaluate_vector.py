@@ -240,8 +240,8 @@ def run_eval(cfg: Config):
 if __name__ == "__main__":
     for fold in range(1, 6):
         cfg = Config(
-            valid_csv=f"./artifacts/samm_split/fold_{fold}/valid.csv",
-            images_dir="./media/SAMM/dynamic_images",
+            valid_csv=f"./artifacts/casme_split/fold_{fold}/valid.csv",
+            images_dir="./media/CASMEV2/dynamic_images",
             checkpoint=f"./artifacts/learnNetmodels/checkpoints/fold_{fold}/best_last.pth",
             outdir=f"./artifacts/learnNetmodels/eval_fold_{fold}",
             grayscale=False,
@@ -249,7 +249,7 @@ if __name__ == "__main__":
             batch_size=32,
             num_workers=4,
             seed=42,
-            npy_dir = "./SMIRK_vector/SAMM_SMIRK_gaussian_shape"
+            npy_dir = "./SMIRK_vector/CASME_SMIRK_gaussian_shape"
         )
         print(f"=== Running eval for fold {fold} ===")
         run_eval(cfg)
