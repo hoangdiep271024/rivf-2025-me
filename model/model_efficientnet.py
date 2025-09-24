@@ -5,7 +5,7 @@ import torch.nn as nn
 MODEL_NAME = "efficientnet_b1.ft_in1k"
 
 class CustomModel(nn.Module):
-    def __init__(self, num_classes: int, extra_dim: int = 0, pretrained: bool = True):
+    def __init__(self, num_classes: int, extra_dim: int = 0, pretrained: bool = True,projector_type: str = "mlp2x_gelu"):
         super().__init__()
         # Backbone EfficientNet
         self.model_base = timm.create_model(MODEL_NAME, pretrained=pretrained)
@@ -16,11 +16,12 @@ class CustomModel(nn.Module):
         self.extra_dim = extra_dim
 
         if extra_dim > 0:
-            self.extra_proj = nn.Sequential(
-                nn.BatchNorm1d(extra_dim),
-                nn.ReLU(inplace=True)
+             self.extra_proj = build_vision_projector(
+                mm_hidden_size=extra_dim,
+                hidden_size= in_features,
+                projector_type= projector_type,
             )
-            self.in_features = in_features + extra_dim 
+            self.in_features = in_features * 2 
         else:
             self.extra_proj = None
             self.in_features = in_features
@@ -38,8 +39,8 @@ class CustomModel(nn.Module):
         return out
 
 
-def build_model(num_classes: int, extra_dim: int = 0, pretrained: bool = True):
+def build_model(num_classes: int, extra_dim: int = 0, pretrained: bool = True, projector_type: str = "mlp2x_gelu"):
     """
     Build EfficientNet model + optional extra vector.
     """
-    return CustomModel(num_classes=num_classes, extra_dim=extra_dim, pretrained=pretrained)
+    return CustomModel(num_classes=num_classes, extra_dim=extra_dim, pretrained=pretrained, projector_type = projector_type)
