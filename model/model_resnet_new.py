@@ -22,11 +22,12 @@ class CustomModel(nn.Module):
 
         self.backbone_dim = in_features
         self.extra_dim = extra_dim
+        self.norm = nn.LayerNorm(self.in_features)
         if extra_dim > 0:
-            self.extra_proj = nn.Sequential(
-                nn.BatchNorm1d(extra_dim),
-                nn.ReLU(inplace=True)
-            )
+            # self.extra_proj = nn.Sequential(
+            #     nn.BatchNorm1d(extra_dim),
+            #     nn.ReLU(inplace=True)
+            # )
             self.in_features = in_features + extra_dim
         else:
             self.extra_proj = None
@@ -45,6 +46,7 @@ class CustomModel(nn.Module):
             
             extra_feat = self.extra_proj(extra_vec)  
             features = torch.cat([features, extra_feat], dim=1) 
+            features = self.norm(features)
 
         out = self.classifier(features)
         return out
