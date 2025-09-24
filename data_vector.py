@@ -90,8 +90,6 @@ def make_balanced_loader(ds, batch_size=32, num_workers=4, balance=True):
 #     aug[0, :] = vec1
 #     return aug
 
-import numpy as np
-
 def augment_shape_two_versions(vec, drop_ratio=0.2):
     aug = vec.copy()
     vec1 = aug[0, :]
