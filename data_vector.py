@@ -61,60 +61,56 @@ def make_balanced_loader(ds, batch_size=32, num_workers=4, balance=True):
 #     aug1[0, :] = vec1
 #     return aug1
 
-# def augment_shape_two_versions(vec, drop_ratio=0.2):
-#     """
-#     vec: numpy array shape (1,353)
-#     return: augmented version cùng shape (1,353)
-#     """
-#     aug = vec.copy()
-#     vec1 = aug[0, :]
-#     expr_idx  = np.arange(0, 50)      # 0-49
-#     jaw_idx   = np.arange(50, 53)     # 50-52
-#     shape_idx = np.arange(53, 353)    # 53-352
-    
-#     expr_mean  = vec1[expr_idx].mean()
-#     jaw_mean   = vec1[jaw_idx].mean()
-#     shape_mean = vec1[shape_idx].mean()
-    
-#     n_drop = int(len(vec1) * drop_ratio)
-#     idx_drop = np.random.choice(len(vec1), n_drop, replace=False)
-
-#     for idx in idx_drop:
-#         if idx in expr_idx:
-#             vec1[idx] = expr_mean
-#         elif idx in jaw_idx:
-#             vec1[idx] = jaw_mean
-#         elif idx in shape_idx:
-#             vec1[idx] = -0.5
-
-#     aug[0, :] = vec1
-#     return aug
-
 def augment_shape_two_versions(vec, drop_ratio=0.2):
     aug = vec.copy()
     vec1 = aug[0, :]
-
-    # indices
     expr_idx  = np.arange(0, 50)      # 0-49
     jaw_idx   = np.arange(50, 53)     # 50-52
     shape_idx = np.arange(53, 353)    # 53-352
-    expr_std  = vec1[expr_idx].std()
-    jaw_std   = vec1[jaw_idx].std()
-    shape_std = vec1[shape_idx].std()
-
+    
+    expr_mean  = vec1[expr_idx].mean()
+    jaw_mean   = vec1[jaw_idx].mean()
+    shape_mean = vec1[shape_idx].mean()
+    
     n_drop = int(len(vec1) * drop_ratio)
     idx_drop = np.random.choice(len(vec1), n_drop, replace=False)
 
     for idx in idx_drop:
         if idx in expr_idx:
-            vec1[idx] = np.random.normal(0, expr_std)
+            vec1[idx] = expr_mean
         elif idx in jaw_idx:
-            vec1[idx] = np.random.normal(0, jaw_std)
+            vec1[idx] = jaw_mean
         elif idx in shape_idx:
-            vec1[idx] = np.random.normal(0, shape_std)
+            vec1[idx] = -0.5
 
     aug[0, :] = vec1
     return aug
+
+# def augment_shape_two_versions(vec, drop_ratio=0.2):
+#     aug = vec.copy()
+#     vec1 = aug[0, :]
+
+#     # indices
+#     expr_idx  = np.arange(0, 50)      # 0-49
+#     jaw_idx   = np.arange(50, 53)     # 50-52
+#     shape_idx = np.arange(53, 353)    # 53-352
+#     expr_std  = vec1[expr_idx].std()
+#     jaw_std   = vec1[jaw_idx].std()
+#     shape_std = vec1[shape_idx].std()
+
+#     n_drop = int(len(vec1) * drop_ratio)
+#     idx_drop = np.random.choice(len(vec1), n_drop, replace=False)
+
+#     for idx in idx_drop:
+#         if idx in expr_idx:
+#             vec1[idx] = np.random.normal(0, expr_std)
+#         elif idx in jaw_idx:
+#             vec1[idx] = np.random.normal(0, jaw_std)
+#         elif idx in shape_idx:
+#             vec1[idx] = np.random.normal(0, shape_std)
+
+#     aug[0, :] = vec1
+#     return aug
 
 
 
