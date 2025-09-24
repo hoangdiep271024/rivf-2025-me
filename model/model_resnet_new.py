@@ -25,7 +25,7 @@ class CustomModel(nn.Module):
         if extra_dim > 0:
             self.extra_proj = nn.Sequential(
                 nn.BatchNorm1d(extra_dim),
-                # nn.ReLU(inplace=True)
+                nn.ReLU(inplace=True)
             )
             self.in_features = in_features + extra_dim
         else:
