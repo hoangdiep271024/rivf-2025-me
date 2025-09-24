@@ -1,16 +1,14 @@
 import timm
 import torch.nn as nn
 import torch
-
+from build_projector import build_vision_projector
 MODEL_NAME = "resnet50.a1_in1k"
 
 class CustomModel(nn.Module):
-    def __init__(self, model_name: str, num_classes: int, extra_dim: int = 0, pretrained: bool = True):
+    def __init__(self, model_name: str, num_classes: int, extra_dim: int = 0, pretrained: bool = True, projector_type: str = "mlp2x_gelu",):
         super().__init__()
         # backbone
         self.model_base = timm.create_model(model_name, pretrained=pretrained)
-
-        # lấy số chiều feature gốc
         if hasattr(self.model_base, "classifier"):
             in_features = self.model_base.classifier.in_features
             self.model_base.classifier = nn.Identity()
@@ -23,9 +21,10 @@ class CustomModel(nn.Module):
         self.backbone_dim = in_features
         self.extra_dim = extra_dim
         if extra_dim > 0:
-            self.extra_proj = nn.Sequential(
-                nn.BatchNorm1d(extra_dim),
-                nn.ReLU(inplace=True)
+            self.extra_proj = build_vision_projector(
+                mm_hidden_size=extra_dim,
+                hidden_size= in_features,
+                projector_type= projector_type,
             )
             self.in_features = in_features + extra_dim
         else:
@@ -49,8 +48,9 @@ class CustomModel(nn.Module):
         return out
   
 
-def build_model(num_classes: int, extra_dim: int = 0, pretrained: bool = True, model_name: str = MODEL_NAME):
+def build_model(num_classes: int, extra_dim: int = 0, pretrained: bool = True, model_name: str = MODEL_NAME, projector_type: str = "mlp2x_gelu",):
     return CustomModel(model_name=model_name, 
                        num_classes=num_classes, 
                        extra_dim=extra_dim, 
-                       pretrained=pretrained)
+                       pretrained=pretrained,
+                       projector_type=projector_type)
