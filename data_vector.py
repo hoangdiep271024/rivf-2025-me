@@ -197,8 +197,8 @@ class CASMECSVDataset(Dataset):
 
         if path_npy is not None and path_npy.exists():
             vec = np.load(path_npy)
-            if self.is_train:
-                vec = augment_shape_two_versions(vec)
+            # if self.is_train:
+            #     vec = augment_shape_two_versions(vec)
             vec = torch.tensor(vec, dtype=torch.float32).squeeze(0)
         else:
             vec = torch.zeros((353,), dtype=torch.float32)  # valid dùng vector 0
