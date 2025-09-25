@@ -1,11 +1,11 @@
 import timm
 import torch
 import torch.nn as nn
-
+from build_projector import build_vision_projector
 MODEL_NAME = "densenet121.ra_in1k"
 
 class CustomDenseNet(nn.Module):
-    def __init__(self, model_name: str, num_classes: int, extra_dim: int = 0, pretrained: bool = True):
+    def __init__(self, model_name: str, num_classes: int, extra_dim: int = 0, pretrained: bool = True, projector_type: str = "mlp2x_gelu"):
         super().__init__()
         self.model_base = timm.create_model(model_name, pretrained=pretrained)
 
@@ -19,11 +19,12 @@ class CustomDenseNet(nn.Module):
         self.extra_dim = extra_dim
 
         if extra_dim > 0:
-            self.extra_proj = nn.Sequential(
-                nn.BatchNorm1d(extra_dim),
-                nn.ReLU(inplace=True)
+            self.extra_proj = build_vision_projector(
+                mm_hidden_size=extra_dim,
+                hidden_size= in_features,
+                projector_type= projector_type,
             )
-            self.in_features = in_features + extra_dim
+            self.in_features = in_features * 2
         else:
             self.extra_proj = None
             self.in_features = in_features
@@ -48,11 +49,12 @@ class CustomDenseNet(nn.Module):
         return out
 
 
-def build_model(num_classes: int, extra_dim: int = 0, pretrained: bool = True, model_name: str = MODEL_NAME):
+def build_model(num_classes: int, extra_dim: int = 0, pretrained: bool = True, model_name: str = MODEL_NAME, projector_type: str = "mlp2x_gelu"):
     return CustomDenseNet(
         model_name=model_name,
         num_classes=num_classes,
         extra_dim=extra_dim,
-        pretrained=pretrained
+        pretrained=pretrained,
+        projector_type=projector_type
     )
 
