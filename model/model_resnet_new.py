@@ -21,12 +21,16 @@ class CustomModel(nn.Module):
         self.backbone_dim = in_features
         self.extra_dim = extra_dim
         if extra_dim > 0:
-            self.extra_proj = build_vision_projector(
-                mm_hidden_size=extra_dim,
-                hidden_size= in_features,
-                projector_type= projector_type,
+            # self.extra_proj = build_vision_projector(
+            #     mm_hidden_size=extra_dim,
+            #     hidden_size= in_features,
+            #     projector_type= projector_type,
+            # )
+            self.extra_proj = nn.Sequential(
+                nn.BatchNorm1d(extra_dim),
+                nn.ReLU(inplace=True)
             )
-            self.in_features = in_features * 2
+            self.in_features = in_features + extra_dim
         else:
             self.extra_proj = None
             self.in_features = in_features
@@ -48,7 +52,7 @@ class CustomModel(nn.Module):
         return out
   
 
-def build_model(num_classes: int, extra_dim: int = 0, pretrained: bool = True, model_name: str = MODEL_NAME, projector_type: str = "mlp2x_gelu",):
+def build_model(num_classes: int, extra_dim: int = 0, pretrained: bool = True, model_name: str = MODEL_NAME, projector_type: str = "mlp2x_gelu"):
     return CustomModel(model_name=model_name, 
                        num_classes=num_classes, 
                        extra_dim=extra_dim, 
