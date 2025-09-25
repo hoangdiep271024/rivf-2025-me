@@ -15,7 +15,7 @@ from sklearn.metrics import (
     precision_recall_fscore_support,
 )
 
-from model.model_vgg import build_model
+from model.model_siglipv2 import build_model
 from data_vector import CASMECSVDataset, build_transforms
 
 # -------------------- Config --------------------
