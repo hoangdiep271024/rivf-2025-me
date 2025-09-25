@@ -1,6 +1,7 @@
 import timm
-import torch
 import torch.nn as nn
+import torch
+from build_projector import build_vision_projector
 
 MODEL_NAME = "efficientnet_b1.ft_in1k"
 
