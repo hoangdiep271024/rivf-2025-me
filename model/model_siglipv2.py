@@ -1,11 +1,11 @@
 import torch
 import torch.nn as nn
 from transformers import SiglipVisionModel
-
+from build_projector import build_vision_projector
 MODEL_NAME = "google/siglip2-base-patch16-224"
 
 class CustomModel(nn.Module):
-    def __init__(self, num_classes: int, extra_dim: int = 0, model_name: str = MODEL_NAME):
+    def __init__(self, num_classes: int, extra_dim: int = 0, model_name: str = MODEL_NAME, projector_type: str = "mlp2x_gelu"):
         super().__init__()
         # Backbone SigLIP (vision-only)
         self.model_base = SiglipVisionModel.from_pretrained(model_name)
@@ -13,11 +13,12 @@ class CustomModel(nn.Module):
 
         self.extra_dim = extra_dim
         if extra_dim > 0:
-            self.extra_proj = nn.Sequential(
-                nn.BatchNorm1d(extra_dim),
-                nn.ReLU(inplace=True)
+            self.extra_proj = build_vision_projector(
+                mm_hidden_size=extra_dim,
+                hidden_size= in_features,
+                projector_type= projector_type,
             )
-            self.in_features = in_features + extra_dim
+            self.in_features = in_features * 2
         else:
             self.extra_proj = None
             self.in_features = in_features
@@ -35,5 +36,5 @@ class CustomModel(nn.Module):
         return self.classifier(feat)
 
 
-def build_model(num_classes: int, extra_dim: int = 0, model_name: str = MODEL_NAME):
-    return CustomModel(num_classes=num_classes, extra_dim=extra_dim, model_name=model_name)
+def build_model(num_classes: int, extra_dim: int = 0, model_name: str = MODEL_NAME, projector_type: str = "mlp2x_gelu"):
+    return CustomModel(num_classes=num_classes, extra_dim=extra_dim, model_name=model_name, projector_type=projector_type)
