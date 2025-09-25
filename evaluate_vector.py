@@ -15,7 +15,7 @@ from sklearn.metrics import (
     precision_recall_fscore_support,
 )
 
-from model.model_efficientnet import build_model
+from model.model_convnext import build_model
 from data_vector import CASMECSVDataset, build_transforms
 
 # -------------------- Config --------------------
