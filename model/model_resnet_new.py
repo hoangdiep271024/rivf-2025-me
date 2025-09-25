@@ -5,7 +5,7 @@ from build_projector import build_vision_projector
 MODEL_NAME = "resnet50.a1_in1k"
 
 class CustomModel(nn.Module):
-    def __init__(self, model_name: str, num_classes: int, extra_dim: int = 0, pretrained: bool = True, projector_type: str = "mlp2x_gelu",):
+    def __init__(self, model_name: str, num_classes: int, extra_dim: int = 0, pretrained: bool = True, projector_type: str = "mlp2x_gelu"):
         super().__init__()
         # backbone
         self.model_base = timm.create_model(model_name, pretrained=pretrained)
