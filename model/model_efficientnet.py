@@ -22,7 +22,7 @@ class CustomModel(nn.Module):
                 hidden_size= in_features,
                 projector_type= projector_type,
             )
-            self.in_features = in_features * 2 
+             self.in_features = in_features * 2 
         else:
             self.extra_proj = None
             self.in_features = in_features
