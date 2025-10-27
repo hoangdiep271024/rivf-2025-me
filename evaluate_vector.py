@@ -15,7 +15,7 @@ from sklearn.metrics import (
     precision_recall_fscore_support,
 )
 
-from model.model_convnext import build_model
+from model.model_efficientnet import build_model
 from data_vector import CASMECSVDataset, build_transforms
 
 # -------------------- Config --------------------
@@ -249,7 +249,7 @@ if __name__ == "__main__":
             batch_size=32,
             num_workers=4,
             seed=42,
-            npy_dir = "./SMIRK_vector/CASME_SMIRK_mean"
+            npy_dir = "./SMIRK_vector/CASME_SMIRK_gaussian"
         )
         print(f"=== Running eval for fold {fold} ===")
         run_eval(cfg)
