@@ -12,7 +12,7 @@ from torch.utils.data import DataLoader, WeightedRandomSampler
 from torch.utils.tensorboard import SummaryWriter
 
 from data_vector import build_datasets_from_splits, compute_class_weights as compute_class_weights_from_data
-from model.model_convnext import build_model
+from model.model_efficientnet import build_model
 
 
 
