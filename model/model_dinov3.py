@@ -43,16 +43,16 @@ class CustomModel(nn.Module):
 
         self.extra_dim = extra_dim
         if extra_dim > 0:
-            # self.extra_proj = build_vision_projector(
-            #     mm_hidden_size=extra_dim,
-            #     hidden_size= in_features,
-            #     projector_type= projector_type,
-            # )
-            self.extra_proj = nn.Sequential(
-                nn.BatchNorm1d(extra_dim),
-                nn.ReLU(inplace=True)
+            self.extra_proj = build_vision_projector(
+                mm_hidden_size=extra_dim,
+                hidden_size= in_features,
+                projector_type= projector_type,
             )
-            self.in_features = in_features + extra_dim 
+            # self.extra_proj = nn.Sequential(
+            #     nn.BatchNorm1d(extra_dim),
+            #     nn.ReLU(inplace=True)
+            # )
+            self.in_features = in_features * 2
         else:
             self.extra_proj = None
             self.in_features = in_features

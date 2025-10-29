@@ -30,7 +30,7 @@ class CustomModel(nn.Module):
             #     nn.BatchNorm1d(extra_dim),
             #     nn.ReLU(inplace=True)
             # )
-            self.in_features = in_features
+            self.in_features = in_features * 2
         else:
             self.extra_proj = None
             self.in_features = in_features
@@ -47,8 +47,8 @@ class CustomModel(nn.Module):
                 raise ValueError(f"Batch size không khớp: features={features.size()}, extra_vec={extra_vec.size()}")
             
             extra_feat = self.extra_proj(extra_vec)  
-            # features = torch.cat([features, extra_feat], dim=1) 
-            features = features + extra_feat
+            features = torch.cat([features, extra_feat], dim=1) 
+            # features = features + extra_feat
         out = self.classifier(features)
         return out
   
