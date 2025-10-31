@@ -12,7 +12,6 @@ from torch.utils.data import DataLoader, WeightedRandomSampler
 from torch.utils.tensorboard import SummaryWriter
 
 from data_vector import build_datasets_from_splits, compute_class_weights as compute_class_weights_from_data
-from model.model_dinov3 import build_model
 
 
 
@@ -37,6 +36,7 @@ class Config:
     weight_decay: float = 4e-5
     epochs: int = 100
     seed: int = 42
+    model_name: str = "resnet"
 
     # imbalance handling — pick ONE (recommended: weighted loss ON, sampler OFF)
     use_class_weights: bool = False
@@ -198,6 +198,32 @@ def evaluate(model, criterion, loader, device):
         n += xb.size(0)
     
     return run_loss / max(n, 1), run_correct / max(n, 1)
+def build_model_by_name(name: str, num_classes: int, pretrained: bool = True, extra_dim: int = 0):
+    name = name.lower()
+
+    if name == "resnet":
+        from model.model_resnet_new import build_model as build_resnet
+        if extra_dim > 0:
+            return build_resnet(num_classes=num_classes, pretrained=pretrained, extra_dim=extra_dim)
+        return build_resnet(num_classes=num_classes, pretrained=pretrained)
+
+    elif name == "efficientnet":
+        from model.model_efficientnet import build_model as build_efficientnet
+        if extra_dim > 0:
+            return build_efficientnet(num_classes=num_classes, pretrained=pretrained, extra_dim=extra_dim)
+        return build_efficientnet(num_classes=num_classes, pretrained=pretrained)
+
+    elif name == "vision_transformer":
+        from model.model_convnext import build_model as build_vision_transformer
+        if extra_dim > 0:
+            return build_vision_transformer(num_classes=num_classes, pretrained=pretrained, extra_dim=extra_dim)
+        return build_vision_transformer(num_classes=num_classes, pretrained=pretrained)
+
+    elif name == "densenet":
+        from model.model_vgg import build_model as build_densenet
+        if extra_dim > 0:
+            return build_densenet(num_classes=num_classes, pretrained=pretrained, extra_dim=extra_dim)
+        return build_densenet(num_classes=num_classes, pretrained=pretrained)
 
 
 
@@ -228,7 +254,12 @@ def main(cfg: Config):
 
     # Model / Loss / Optim / Sched
     # model = LEARNet(num_classes=num_classes).to(device)
-    model = build_model(num_classes=num_classes, extra_dim=53).to(device)
+    model = build_model_by_name(
+            cfg.model_name,
+            num_classes=num_classes,
+            pretrained=True,
+            extra_dim= 53
+        ).to(device)
 
     if cfg.use_class_weights:
         y_train = getattr(train_ds, "y")
@@ -278,27 +309,35 @@ def main(cfg: Config):
 
 
 if __name__ == "__main__":
-    base_dir = Path("./artifacts/casme_split")
-    for fold in range(1, 6): 
-        print(f"\n===== Training Fold {fold}/5 =====")
-        cfg = Config(
-            train_csv=str(base_dir / f"fold_{fold}/train.csv"),
-            valid_csv=str(base_dir / f"fold_{fold}/valid.csv"),
-            images_dir="./media/CASMEV2/dynamic_images",
-            outdir=f"./artifacts/learnNetmodels/checkpoints/fold_{fold}",
-            log_dir=f"./artifacts/learnNetmodels/logs/fold_{fold}",
-            npy_dir="./SMIRK_vector/CASME_SMIRK_gaussian",
-            grayscale=False,
-            input_size=224,
-            num_workers=4,
-            batch_size=32,
-            lr=2e-3,
-            weight_decay=4e-5,
-            epochs=150,
-            seed=42,
-            use_class_weights=True,
-            balance_sampler=False,
-            use_cosine=True,
-        )
+    model_list = ["resnet", "efficientnet", "densenet", "vision_transformer"]
+    # model_list = ["resnet","densenet", "vision_transformer"]
+    base_dir = Path("./artifacts/samm_split")
 
-        main(cfg)
+    for model in model_list:
+        print(f"\n##### Training model: {model.upper()} #####")
+
+        for fold in range(1, 6):
+            print(f"\n===== Training Fold {fold}/5 for {model} =====")
+
+            cfg = Config(
+                train_csv=str(base_dir / f"fold_{fold}/train.csv"),
+                valid_csv=str(base_dir / f"fold_{fold}/valid.csv"),
+                images_dir="./media/SAMM/dynamic_images",
+                outdir=f"./artifacts/learnNetmodels/checkpoints/{model}/fold_{fold}",
+                log_dir=f"./artifacts/learnNetmodels/logs/{model}/fold_{fold}",
+                npy_dir="./SMIRK_vector/SAMM_SMIRK_gaussian",
+                grayscale=False,
+                input_size=224,
+                num_workers=4,
+                batch_size=32,
+                lr=2e-3,
+                weight_decay=4e-5,
+                epochs=150,
+                seed=42,
+                use_class_weights=True,
+                balance_sampler=False,
+                use_cosine=True,
+                model_name=model,
+            )
+
+            main(cfg)

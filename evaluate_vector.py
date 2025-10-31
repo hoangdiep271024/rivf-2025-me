@@ -14,8 +14,6 @@ from sklearn.metrics import (
     accuracy_score,
     precision_recall_fscore_support,
 )
-
-from model.model_dinov3 import build_model
 from data_vector import CASMECSVDataset, build_transforms
 
 # -------------------- Config --------------------
@@ -28,7 +26,7 @@ class Config:
     npy_dir : str ="./SMIRK_vector/CASME_SMIRK_weighted"
     # io
     outdir: str = "./artifacts/learnNetmodels/eval_fold_1"
-
+    model_name: str ="resnet"
     # pipeline
     grayscale: bool = False          # RGB default
     input_size: int = 112
@@ -138,7 +136,32 @@ def _plot_confmat(cm: np.ndarray, class_names: list, out_png: Path, normalize: b
     fig.savefig(out_png, dpi=150)
     plt.close(fig)
 
+def build_model_by_name(name: str, num_classes: int, pretrained: bool = True, extra_dim: int = 0):
+    name = name.lower()
 
+    if name == "resnet":
+        from model.model_resnet_new import build_model as build_resnet
+        if extra_dim > 0:
+            return build_resnet(num_classes=num_classes, pretrained=pretrained, extra_dim=extra_dim)
+        return build_resnet(num_classes=num_classes, pretrained=pretrained)
+
+    elif name == "efficientnet":
+        from model.model_efficientnet import build_model as build_efficientnet
+        if extra_dim > 0:
+            return build_efficientnet(num_classes=num_classes, pretrained=pretrained, extra_dim=extra_dim)
+        return build_efficientnet(num_classes=num_classes, pretrained=pretrained)
+
+    elif name == "vision_transformer":
+        from model.model_convnext import build_model as build_vision_transformer
+        if extra_dim > 0:
+            return build_vision_transformer(num_classes=num_classes, pretrained=pretrained, extra_dim=extra_dim)
+        return build_vision_transformer(num_classes=num_classes, pretrained=pretrained)
+
+    elif name == "densenet":
+        from model.model_vgg import build_model as build_densenet
+        if extra_dim > 0:
+            return build_densenet(num_classes=num_classes, pretrained=pretrained, extra_dim=extra_dim)
+        return build_densenet(num_classes=num_classes, pretrained=pretrained)
 # -------------------- Evaluation --------------------
 @torch.no_grad()
 def run_eval(cfg: Config):
@@ -154,7 +177,12 @@ def run_eval(cfg: Config):
     num_classes = len(classes)
 
     # 2) Build model and load weights - THÊM extra_dim=53
-    model = build_model(num_classes=num_classes, extra_dim=53).to(device)
+    model = build_model_by_name(
+            cfg.model_name,
+            num_classes=num_classes,
+            pretrained=True,
+            extra_dim= 53
+        ).to(device)
     model.load_state_dict(ckpt["model"], strict=True)
     model.eval()
 
@@ -238,18 +266,26 @@ def run_eval(cfg: Config):
 
 # -------------------- Run --------------------
 if __name__ == "__main__":
-    for fold in range(1, 6):
-        cfg = Config(
-            valid_csv=f"./artifacts/casme_split/fold_{fold}/valid.csv",
-            images_dir="./media/CASMEV2/dynamic_images",
-            checkpoint=f"./artifacts/learnNetmodels/checkpoints/fold_{fold}/best_last.pth",
-            outdir=f"./artifacts/learnNetmodels/eval_fold_{fold}",
-            grayscale=False,
-            input_size=224,  # Đảm bảo khớp với training
-            batch_size=32,
-            num_workers=4,
-            seed=42,
-            npy_dir = "./SMIRK_vector/CASME_SMIRK_gaussian"
-        )
-        print(f"=== Running eval for fold {fold} ===")
-        run_eval(cfg)
+    model_list = ["resnet", "efficientnet", "densenet", "vision_transformer"]
+    # model_list = ["resnet","densenet", "vision_transformer"]
+
+    for model in model_list:
+        print(f"\n##### Running evaluation for model: {model.upper()} #####")
+
+        for fold in range(1, 6):
+            cfg = Config(
+                valid_csv=f"./artifacts/samm_split/fold_{fold}/valid.csv",
+                images_dir="./media/SAMM/dynamic_images",
+                checkpoint=f"./artifacts/learnNetmodels/checkpoints/{model}/fold_{fold}/best_last.pth",
+                outdir=f"./artifacts/learnNetmodels/eval/{model}/fold_{fold}",
+                grayscale=False,   # RGB default
+                input_size=224,    # Đảm bảo khớp với training
+                batch_size=32,
+                num_workers=4,
+                seed=42,
+                npy_dir="./SMIRK_vector/SAMM_SMIRK_gaussian",
+                model_name=model,  
+            )
+
+            print(f"=== Running eval for {model} | Fold {fold}/5 ===")
+            run_eval(cfg)
