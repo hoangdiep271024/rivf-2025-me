@@ -225,6 +225,27 @@ def build_model_by_name(name: str, num_classes: int, pretrained: bool = True, ex
             return build_densenet(num_classes=num_classes, pretrained=pretrained, extra_dim=extra_dim)
         return build_densenet(num_classes=num_classes, pretrained=pretrained)
 
+    elif name == "siglipv2":
+        from model.model_siglipv2 import build_model as build_siglipv2
+        if extra_dim > 0:
+            return build_siglipv2(num_classes=num_classes, pretrained=pretrained, extra_dim=extra_dim)
+        return build_siglipv2(num_classes=num_classes, pretrained=pretrained)
+
+    elif name == "radiov3":
+        from model.model_radiov3 import build_model as build_radiov3
+        if extra_dim > 0:
+            return build_radiov3(num_classes=num_classes, pretrained=pretrained, extra_dim=extra_dim)
+        return build_radiov3(num_classes=num_classes, pretrained=pretrained)
+
+    elif name == "dinov3":
+        from model.model_dinov3 import build_model as build_dinov3
+        if extra_dim > 0:
+            return build_dinov3(num_classes=num_classes, pretrained=pretrained, extra_dim=extra_dim)
+        return build_dinov3(num_classes=num_classes, pretrained=pretrained)
+
+    else:
+        raise ValueError(f"Unknown model name: {name}")
+
 
 
 # -------------------- Main --------------------
@@ -309,9 +330,9 @@ def main(cfg: Config):
 
 
 if __name__ == "__main__":
-    model_list = ["resnet", "efficientnet", "densenet", "vision_transformer"]
+    model_list = ["resnet", "efficientnet", "densenet", "vision_transformer", "radiov3", "siglipv2"]
     # model_list = ["resnet","densenet", "vision_transformer"]
-    base_dir = Path("./artifacts/samm_split")
+    base_dir = Path("./artifacts/casme_split")
 
     for model in model_list:
         print(f"\n##### Training model: {model.upper()} #####")
@@ -322,10 +343,10 @@ if __name__ == "__main__":
             cfg = Config(
                 train_csv=str(base_dir / f"fold_{fold}/train.csv"),
                 valid_csv=str(base_dir / f"fold_{fold}/valid.csv"),
-                images_dir="./media/SAMM/dynamic_images",
+                images_dir="./media/CASME_SOBEL",
                 outdir=f"./artifacts/learnNetmodels/checkpoints/{model}/fold_{fold}",
                 log_dir=f"./artifacts/learnNetmodels/logs/{model}/fold_{fold}",
-                npy_dir="./SMIRK_vector/SAMM_SMIRK_gaussian",
+                npy_dir="./SMIRK_vector/CASME_SMIRK_gaussian",
                 grayscale=False,
                 input_size=224,
                 num_workers=4,

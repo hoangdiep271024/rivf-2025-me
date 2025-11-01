@@ -162,6 +162,28 @@ def build_model_by_name(name: str, num_classes: int, pretrained: bool = True, ex
         if extra_dim > 0:
             return build_densenet(num_classes=num_classes, pretrained=pretrained, extra_dim=extra_dim)
         return build_densenet(num_classes=num_classes, pretrained=pretrained)
+
+    elif name == "siglipv2":
+        from model.model_siglipv2 import build_model as build_siglipv2
+        if extra_dim > 0:
+            return build_siglipv2(num_classes=num_classes, pretrained=pretrained, extra_dim=extra_dim)
+        return build_siglipv2(num_classes=num_classes, pretrained=pretrained)
+
+    elif name == "radiov3":
+        from model.model_radiov3 import build_model as build_radiov3
+        if extra_dim > 0:
+            return build_radiov3(num_classes=num_classes, pretrained=pretrained, extra_dim=extra_dim)
+        return build_radiov3(num_classes=num_classes, pretrained=pretrained)
+
+    elif name == "dinov3":
+        from model.model_dinov3 import build_model as build_dinov3
+        if extra_dim > 0:
+            return build_dinov3(num_classes=num_classes, pretrained=pretrained, extra_dim=extra_dim)
+        return build_dinov3(num_classes=num_classes, pretrained=pretrained)
+
+    else:
+        raise ValueError(f"Unknown model name: {name}")
+
 # -------------------- Evaluation --------------------
 @torch.no_grad()
 def run_eval(cfg: Config):
@@ -266,7 +288,7 @@ def run_eval(cfg: Config):
 
 # -------------------- Run --------------------
 if __name__ == "__main__":
-    model_list = ["resnet", "efficientnet", "densenet", "vision_transformer"]
+    model_list = ["resnet", "efficientnet", "densenet", "vision_transformer", "radiov3", "siglipv2"]
     # model_list = ["resnet","densenet", "vision_transformer"]
 
     for model in model_list:
@@ -274,8 +296,8 @@ if __name__ == "__main__":
 
         for fold in range(1, 6):
             cfg = Config(
-                valid_csv=f"./artifacts/samm_split/fold_{fold}/valid.csv",
-                images_dir="./media/SAMM/dynamic_images",
+                valid_csv=f"./artifacts/casme_split/fold_{fold}/valid.csv",
+                images_dir="./media/CASME_SOBEL",
                 checkpoint=f"./artifacts/learnNetmodels/checkpoints/{model}/fold_{fold}/best_last.pth",
                 outdir=f"./artifacts/learnNetmodels/eval/{model}/fold_{fold}",
                 grayscale=False,   # RGB default
@@ -283,7 +305,7 @@ if __name__ == "__main__":
                 batch_size=32,
                 num_workers=4,
                 seed=42,
-                npy_dir="./SMIRK_vector/SAMM_SMIRK_gaussian",
+                npy_dir="./SMIRK_vector/CASME_SMIRK_gaussian",
                 model_name=model,  
             )
 
