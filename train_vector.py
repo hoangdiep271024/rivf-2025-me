@@ -330,8 +330,8 @@ def main(cfg: Config):
 
 
 if __name__ == "__main__":
-    model_list = ["resnet", "efficientnet", "densenet", "vision_transformer", "radiov3", "siglipv2"]
-    # model_list = ["resnet","densenet", "vision_transformer"]
+    # model_list = ["resnet", "efficientnet", "densenet", "vision_transformer", "radiov3", "siglipv2"]
+    model_list = ["siglipv2"]
     base_dir = Path("./artifacts/casme_split")
 
     for model in model_list:

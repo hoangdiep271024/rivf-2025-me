@@ -40,5 +40,12 @@ class CustomModel(nn.Module):
         return self.classifier(feat)
 
 
-def build_model(num_classes: int, extra_dim: int = 0, model_name: str = MODEL_NAME, projector_type: str = "mlp2x_gelu"):
-    return CustomModel(num_classes=num_classes, extra_dim=extra_dim, model_name=model_name, projector_type=projector_type)
+def build_model(
+    num_classes: int, extra_dim: int = 0, model_name: str = MODEL_NAME, projector_type: str = "mlp2x_gelu", pretrained: bool = True,):
+    return CustomModel(
+        num_classes=num_classes,
+        extra_dim=extra_dim,
+        model_name=model_name,
+        projector_type=projector_type,
+        pretrained=pretrained,
+    )
