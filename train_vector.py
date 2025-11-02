@@ -228,8 +228,8 @@ def build_model_by_name(name: str, num_classes: int, pretrained: bool = True, ex
     elif name == "siglipv2":
         from model.model_siglipv2 import build_model as build_siglipv2
         if extra_dim > 0:
-            return build_siglipv2(num_classes=num_classes, pretrained=pretrained, extra_dim=extra_dim)
-        return build_siglipv2(num_classes=num_classes, pretrained=pretrained)
+            return build_siglipv2(num_classes=num_classes, extra_dim=extra_dim)
+        return build_siglipv2(num_classes=num_classes)
 
     elif name == "radiov3":
         from model.model_radiov3 import build_model as build_radiov3
