@@ -288,16 +288,16 @@ def run_eval(cfg: Config):
 
 # -------------------- Run --------------------
 if __name__ == "__main__":
-    # model_list = ["resnet", "efficientnet", "densenet", "vision_transformer", "radiov3", "siglipv2"]
-    model_list = ["siglipv2"]
+    model_list = ["resnet", "efficientnet", "densenet", "vision_transformer", "radiov3", "siglipv2"]
+    # model_list = ["siglipv2"]
 
     for model in model_list:
         print(f"\n##### Running evaluation for model: {model.upper()} #####")
 
         for fold in range(1, 6):
             cfg = Config(
-                valid_csv=f"./artifacts/casme_split/fold_{fold}/valid.csv",
-                images_dir="./media/CASME_SOBEL",
+                valid_csv=f"./artifacts/samm_split/fold_{fold}/valid.csv",
+                images_dir="./media/SAMM_SOBEL",
                 checkpoint=f"./artifacts/learnNetmodels/checkpoints/{model}/fold_{fold}/best_last.pth",
                 outdir=f"./artifacts/learnNetmodels/eval/{model}/fold_{fold}",
                 grayscale=False,   # RGB default
@@ -305,7 +305,7 @@ if __name__ == "__main__":
                 batch_size=32,
                 num_workers=4,
                 seed=42,
-                npy_dir="./SMIRK_vector/CASME_SMIRK_gaussian",
+                npy_dir="./SMIRK_vector/SAMM_SMIRK_gaussian",
                 model_name=model,  
             )
 

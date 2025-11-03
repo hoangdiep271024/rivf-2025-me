@@ -330,9 +330,9 @@ def main(cfg: Config):
 
 
 if __name__ == "__main__":
-    # model_list = ["resnet", "efficientnet", "densenet", "vision_transformer", "radiov3", "siglipv2"]
-    model_list = ["siglipv2"]
-    base_dir = Path("./artifacts/casme_split")
+    model_list = ["resnet", "efficientnet", "densenet", "vision_transformer", "radiov3", "siglipv2"]
+    # model_list = ["siglipv2"]
+    base_dir = Path("./artifacts/samm_split")
 
     for model in model_list:
         print(f"\n##### Training model: {model.upper()} #####")
@@ -343,10 +343,10 @@ if __name__ == "__main__":
             cfg = Config(
                 train_csv=str(base_dir / f"fold_{fold}/train.csv"),
                 valid_csv=str(base_dir / f"fold_{fold}/valid.csv"),
-                images_dir="./media/CASME_SOBEL",
+                images_dir="./media/SAMM_SOBEL",
                 outdir=f"./artifacts/learnNetmodels/checkpoints/{model}/fold_{fold}",
                 log_dir=f"./artifacts/learnNetmodels/logs/{model}/fold_{fold}",
-                npy_dir="./SMIRK_vector/CASME_SMIRK_gaussian",
+                npy_dir="./SMIRK_vector/SAMM_SMIRK_gaussian",
                 grayscale=False,
                 input_size=224,
                 num_workers=4,
