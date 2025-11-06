@@ -15,7 +15,6 @@ from sklearn.metrics import (
     precision_recall_fscore_support,
 )
 
-from model.model_radiov3 import build_model
 # We’ll import your dataset + transforms so we can inject the checkpoint's LabelEncoder
 from data_cross import CASMECSVDataset, build_transforms
 

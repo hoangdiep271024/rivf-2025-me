@@ -15,7 +15,6 @@ from sklearn.metrics import (
     precision_recall_fscore_support,
 )
 
-from model.model_siglipv2 import build_model
 # We’ll import your dataset + transforms so we can inject the checkpoint's LabelEncoder
 from data_cross import CASMECSVDataset, build_transforms
 
@@ -29,6 +28,7 @@ class Config:
 
     # io
     outdir: str = "./artifacts/learnNetmodels/eval_fold_1"
+    model_name: str = "resnet"
 
     # pipeline
     grayscale: bool = False          # RGB default
@@ -134,7 +134,53 @@ def _plot_confmat(cm: np.ndarray, class_names: list, out_png: Path, normalize: b
     fig.tight_layout()
     fig.savefig(out_png, dpi=150)
     plt.close(fig)
+def build_model_by_name(name: str, num_classes: int, pretrained: bool = True, extra_dim: int = 0):
+    name = name.lower()
 
+    if name == "resnet":
+        from model.model_resnet_new import build_model as build_resnet
+        if extra_dim > 0:
+            return build_resnet(num_classes=num_classes, pretrained=pretrained, extra_dim=extra_dim)
+        return build_resnet(num_classes=num_classes, pretrained=pretrained)
+
+    elif name == "efficientnet":
+        from model.model_efficientnet import build_model as build_efficientnet
+        if extra_dim > 0:
+            return build_efficientnet(num_classes=num_classes, pretrained=pretrained, extra_dim=extra_dim)
+        return build_efficientnet(num_classes=num_classes, pretrained=pretrained)
+
+    elif name == "vision_transformer":
+        from model.model_convnext import build_model as build_vision_transformer
+        if extra_dim > 0:
+            return build_vision_transformer(num_classes=num_classes, pretrained=pretrained, extra_dim=extra_dim)
+        return build_vision_transformer(num_classes=num_classes, pretrained=pretrained)
+
+    elif name == "densenet":
+        from model.model_vgg import build_model as build_densenet
+        if extra_dim > 0:
+            return build_densenet(num_classes=num_classes, pretrained=pretrained, extra_dim=extra_dim)
+        return build_densenet(num_classes=num_classes, pretrained=pretrained)
+
+    elif name == "siglipv2":
+        from model.model_siglipv2 import build_model as build_siglipv2
+        if extra_dim > 0:
+            return build_siglipv2(num_classes=num_classes, extra_dim=extra_dim)
+        return build_siglipv2(num_classes=num_classes)
+
+    elif name == "radiov3":
+        from model.model_radiov3 import build_model as build_radiov3
+        if extra_dim > 0:
+            return build_radiov3(num_classes=num_classes, pretrained=pretrained, extra_dim=extra_dim)
+        return build_radiov3(num_classes=num_classes, pretrained=pretrained)
+
+    elif name == "dinov3":
+        from model.model_dinov3 import build_model as build_dinov3
+        if extra_dim > 0:
+            return build_dinov3(num_classes=num_classes, pretrained=pretrained, extra_dim=extra_dim)
+        return build_dinov3(num_classes=num_classes, pretrained=pretrained)
+
+    else:
+        raise ValueError(f"Unknown model name: {name}")
 
 # -------------------- Evaluation --------------------
 @torch.no_grad()
@@ -151,7 +197,12 @@ def run_eval(cfg: Config):
     num_classes = len(classes)
 
     # 2) Build model and load weights
-    model = build_model(num_classes=num_classes).to(device)
+    model = build_model_by_name(
+            cfg.model_name,
+            num_classes=num_classes,
+            pretrained=True,
+            extra_dim= 0
+        ).to(device)
     model.load_state_dict(ckpt["model"], strict=True)
     model.eval()
 
@@ -231,15 +282,21 @@ def run_eval(cfg: Config):
 
 # -------------------- Run --------------------
 if __name__ == "__main__":
+    model_list = ["resnet", "efficientnet", "densenet", "vision_transformer", "radiov3", "siglipv2"]
+
+    for model_name in model_list:
+        print(f"\n=== Evaluating model: {model_name} ===\n")
+
         cfg = Config(
-            valid_csv=f"data_csv/label_casme_goc_full.csv",
+            valid_csv= "data_csv/label_casme_goc_full.csv",
             images_dir="./media/CASMEV2/dynamic_images",
-            checkpoint=f"./artifacts/learnNetmodels/checkpoints/best_last.pth",
-            outdir=f"./artifacts/learnNetmodels/eval",
+            checkpoint=f"./artifacts/learnNetmodels/checkpoints/{model_name}/best_last.pth",
+            outdir=f"./artifacts/learnNetmodels/eval/{model_name}/",
             grayscale=False,      # RGB default
             input_size=224,
             batch_size=32,
             num_workers=4,
             seed=42,
         )
+
         run_eval(cfg)
