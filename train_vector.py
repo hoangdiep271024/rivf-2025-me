@@ -330,8 +330,8 @@ def main(cfg: Config):
 
 
 if __name__ == "__main__":
-    model_list = ["resnet", "efficientnet", "densenet", "vision_transformer", "radiov3", "siglipv2"]
-    # model_list = ["dinov3"]
+    # model_list = ["resnet", "efficientnet", "densenet", "vision_transformer", "radiov3", "siglipv2"]
+    model_list = ["dinov3"]
     base_dir = Path("./artifacts/samm_split")
 
     for model in model_list:
