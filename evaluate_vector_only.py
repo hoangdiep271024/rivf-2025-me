@@ -17,7 +17,7 @@ from sklearn.metrics import (
 )
 
 from data_vector_only import build_datasets_from_splits
-from train_vector_linear import LinearClassifier  # dùng model linear 53-d
+from train_vector_only import LinearClassifier  # dùng model linear 53-d
 
 # -------------------- Config --------------------
 @dataclass
