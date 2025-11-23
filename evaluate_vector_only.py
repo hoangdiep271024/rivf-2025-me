@@ -101,7 +101,6 @@ def run_eval(cfg: Config):
     _, valid_ds, meta = build_datasets_from_splits(
         train_csv=cfg.valid_csv,  # dummy
         valid_csv=cfg.valid_csv,
-        images_dir=None,  # không dùng
         grayscale=False,
         target_size=(0, 0),
     )
