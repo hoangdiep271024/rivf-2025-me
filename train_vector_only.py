@@ -165,7 +165,7 @@ if __name__ == "__main__":
     cfg = Config(
         train_csv="./artifacts/casme_split/fold_1/train.csv",
         valid_csv="./artifacts/casme_split/fold_1/valid.csv",
-        vectors_dir="./SMIRK_vector/CASME_SMIRK_gaussian",
+        vectors_dir="TEASER_vector/CASME_TEASER_gaussian",
         outdir="./artifacts/vector_models/checkpoints/fold_1_linear",
         log_dir="./artifacts/vector_models/logs/fold_1_linear",
         epochs=100,
