@@ -149,7 +149,7 @@ def main(cfg: Config):
         writer.add_scalar("Acc/train", tr_acc, epoch)
         writer.add_scalar("Acc/val", va_acc, epoch)
 
-        if va_acc > best_acc:
+        if va_acc > best_acc and epoch > 10:
             best_acc = va_acc
             torch.save({
                 "model": model.state_dict(),
