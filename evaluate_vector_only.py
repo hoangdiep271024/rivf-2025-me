@@ -163,8 +163,8 @@ def run_eval(cfg: Config):
 if __name__ == "__main__":
     for fold in range(1, 6):
         cfg = Config(
-            valid_csv=f"./artifacts/casme_split/fold_{fold}/valid.csv",
-            vectors_dir="TEASER_vector/CASME_TEASER_gaussian",
+            valid_csv=f"./artifacts/samm_split/fold_{fold}/valid.csv",
+            vectors_dir="TEASER_vector/SAMM_TEASER_gaussian",
             checkpoint=f"./artifacts/vector_models/checkpoints/fold_{fold}_linear/best.pth",
             outdir=f"./artifacts/vector_models/eval/fold_{fold}_linear",
             batch_size=64,

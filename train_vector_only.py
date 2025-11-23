@@ -167,10 +167,10 @@ if __name__ == "__main__":
         print(f"\n========== Training FOLD {fold} ==========")
 
         cfg = Config(
-            train_csv=f"./artifacts/casme_split/fold_{fold}/train.csv",
-            valid_csv=f"./artifacts/casme_split/fold_{fold}/valid.csv",
+            train_csv=f"./artifacts/samm_split/fold_{fold}/train.csv",
+            valid_csv=f"./artifacts/samm_split/fold_{fold}/valid.csv",
 
-            vectors_dir="TEASER_vector/CASME_TEASER_gaussian",
+            vectors_dir="TEASER_vector/SAMM_TEASER_gaussian",
             outdir=f"./artifacts/vector_models/checkpoints/fold_{fold}_linear",
             log_dir=f"./artifacts/vector_models/logs/fold_{fold}_linear",
 
