@@ -163,13 +163,20 @@ def main(cfg: Config):
 
 
 if __name__ == "__main__":
-    cfg = Config(
-        train_csv="./artifacts/casme_split/fold_1/train.csv",
-        valid_csv="./artifacts/casme_split/fold_1/valid.csv",
-        vectors_dir="TEASER_vector/CASME_TEASER_gaussian",
-        outdir="./artifacts/vector_models/checkpoints/fold_1_linear",
-        log_dir="./artifacts/vector_models/logs/fold_1_linear",
-        epochs=100,
-        batch_size=32,
-    )
-    main(cfg)
+    for fold in range(1, 6):
+        print(f"\n========== Training FOLD {fold} ==========")
+
+        cfg = Config(
+            train_csv=f"./artifacts/casme_split/fold_{fold}/train.csv",
+            valid_csv=f"./artifacts/casme_split/fold_{fold}/valid.csv",
+
+            vectors_dir="TEASER_vector/CASME_TEASER_gaussian",
+            outdir=f"./artifacts/vector_models/checkpoints/fold_{fold}_linear",
+            log_dir=f"./artifacts/vector_models/logs/fold_{fold}_linear",
+
+            epochs=100,
+            batch_size=32,
+        )
+
+        main(cfg)
+
