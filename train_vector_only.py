@@ -38,6 +38,7 @@ class LinearClassifier(nn.Module):
         self.fc = nn.Linear(input_dim, num_classes)
 
     def forward(self, x):
+        x = x.squeeze(1) 
         return self.fc(x)
 
 
