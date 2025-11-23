@@ -135,14 +135,22 @@ def run_eval(cfg: Config):
     pd.DataFrame(report).to_csv(outdir / "classification_report.csv")
 
     summary = {
-        "accuracy": float(acc),
-        "macro_f1": float(f1_macro),
-        "weighted_f1": float(f1_weight),
-        "classes": classes,
-        "n_valid": int(len(y_true)),
-        "checkpoint": cfg.checkpoint,
-        "config": asdict(cfg),
-    }
+    "accuracy": float(acc),
+
+    "macro_precision": float(p_macro),
+    "macro_recall": float(r_macro),
+    "macro_f1": float(f1_macro),
+
+    "weighted_precision": float(p_weight),
+    "weighted_recall": float(r_weight),
+    "weighted_f1": float(f1_weight),
+
+    "classes": classes,
+    "n_valid": int(len(y_true)),
+    "checkpoint": cfg.checkpoint,
+    "config": asdict(cfg),
+}
+
     with open(outdir / "metrics_summary.json", "w") as f:
         json.dump(summary, f, indent=2)
 
