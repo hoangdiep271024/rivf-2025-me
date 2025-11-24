@@ -308,7 +308,7 @@ if __name__ == "__main__":
             batch_size=32,
             num_workers=4,
             seed=42,
-            use_vector = True,
+            use_vector = False,
             model_name = model_name
         )
 
