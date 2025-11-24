@@ -28,11 +28,6 @@ def _extract_frame_number(seq: str) -> int:
 
 
 def _resolve_path(num: int, images_dir: Path, frame: Optional[int] = None) -> Optional[Path]:
-    """
-    Trả về Path của ảnh theo số sequence và frame.
-    Nếu frame=None, tìm ảnh duy nhất Seq_<num>.jpg
-    Nếu frame có số, tìm Seq_<num>_<frame>.jpg
-    """
     candidates = []
     if frame is not None:
         candidates += [
@@ -105,12 +100,14 @@ class CASMECSVDataset(Dataset):
         df: pd.DataFrame,
         images_dir: str,
         label_encoder: LabelEncoder,
+        npy_dir: Optional[str] = None, 
         grayscale: bool = True,
         transform: Optional[Callable] = None,
         target_size: Tuple[int,int] = (112,112),
         drop_missing: bool = True,
     ):
         self.images_dir = Path(images_dir)
+        self.npy_dir = Path(npy_dir) if npy_dir else None
         self.grayscale = grayscale
         self.transform = transform or build_transforms(grayscale=grayscale, train=True, target_size=target_size)
         self.drop_missing = drop_missing
@@ -125,28 +122,40 @@ class CASMECSVDataset(Dataset):
             seq_num = _extract_seq_number(seq)
             frame_num = _extract_frame_number(seq) if "_" in seq else None
             p = _resolve_path(seq_num, self.images_dir, frame=frame_num)
+            p_npy = self.npy_dir / f"Seq_{seq_num}.npy" if self.npy_dir else None
             if p is None:
                 missing += 1
                 if self.drop_missing: 
                     continue
                 raise FileNotFoundError(f"Image for {seq} not found in {self.images_dir}")
-            samples.append((p, lab))
-
+            
+            if self.npy_dir and (p_npy is None or not p_npy.exists()):
+                missing += 1
+                if self.drop_missing:
+                    continue
+                
+            samples.append((p, p_npy, lab))
         if missing and self.drop_missing:
             print(f"[CASMECSVDataset] skipped {missing} rows (missing images).")
 
         self.samples = samples
-        self.y = self.le.transform([lab for _, lab in samples]).astype(np.int64)
+        self.y = self.le.transform([lab for _, _, lab in samples]).astype(np.int64)
         self.class_names = list(self.le.classes_)
 
     def __len__(self): return len(self.samples)
 
     def __getitem__(self, idx: int):
-        path, lab_str = self.samples[idx]
+        path, path_npy, lab_str = self.samples[idx]
         img = Image.open(path).convert("L" if self.grayscale else "RGB")
         x = self.transform(img) if self.transform else img
+        if path_npy is not None and path_npy.exists():
+            vec = np.load(path_npy)
+            vec = torch.tensor(vec, dtype=torch.float32).squeeze(0)
+        else:
+            vec = torch.zeros((53,), dtype=torch.float32)  # valid dùng vector 0
+
         y = int(self.le.transform([lab_str])[0])
-        return x, y
+        return x, vec, y
 
 # ---------- builders ----------
 def load_splits(train_csv: Optional[str] = None, valid_csv: Optional[str] = None) -> Tuple[Optional[pd.DataFrame], Optional[pd.DataFrame]]:
@@ -170,6 +179,8 @@ from sklearn.preprocessing import LabelEncoder
 def build_datasets_from_splits(
     train_csv: str,
     valid_csv: str,
+    npy_train_dir: str,
+    npy_test_dir: str,
     images_train_dir: str,
     images_test_dir: str,
     grayscale: bool = True,
@@ -177,19 +188,22 @@ def build_datasets_from_splits(
 ):
     train_df, valid_df = load_splits(train_csv, valid_csv)
 
-    # Fit ONE encoder trên cả train + valid
+    # Fit ONE encoder trên train + valid
     le = LabelEncoder().fit(pd.concat([train_df["label"], valid_df["label"]], axis=0))
 
     train_tf = build_transforms(grayscale=grayscale, train=True, target_size=target_size)
     valid_tf = build_transforms(grayscale=grayscale, train=False, target_size=target_size)
 
     train_ds = CASMECSVDataset(
-        train_df, images_train_dir, label_encoder=le,
-        grayscale=grayscale, transform=train_tf, target_size=target_size
+        train_df, images_train_dir, npy_dir=npy_train_dir,
+        label_encoder=le, grayscale=grayscale,
+        transform=train_tf, target_size=target_size
     )
+
     valid_ds = CASMECSVDataset(
-        valid_df, images_test_dir, label_encoder=le,
-        grayscale=grayscale, transform=valid_tf, target_size=target_size
+        valid_df, images_test_dir, npy_dir=npy_test_dir,
+        label_encoder=le, grayscale=grayscale,
+        transform=valid_tf, target_size=target_size
     )
 
     meta = {
@@ -202,23 +216,41 @@ def build_datasets_from_splits(
 
 
 
+
 def build_loaders_from_splits(
     train_csv: str,
     valid_csv: str,
-    images_dir: str,
+    images_train_dir: str,
+    images_test_dir: str,
+    npy_train_dir: str,
+    npy_test_dir: str,
     batch_size: int = 32,
     num_workers: int = 4,
     grayscale: bool = True,
     balance_train: bool = True,
 ):
     train_ds, valid_ds, meta = build_datasets_from_splits(
-        train_csv, valid_csv, images_dir, grayscale=grayscale
+        train_csv=train_csv,
+        valid_csv=valid_csv,
+        npy_train_dir=npy_train_dir,
+        npy_test_dir=npy_test_dir,
+        images_train_dir=images_train_dir,
+        images_test_dir=images_test_dir,
+        grayscale=grayscale
     )
-    train_loader = make_balanced_loader(train_ds, batch_size=batch_size,
-                                        num_workers=num_workers, balance=balance_train)
-    valid_loader = DataLoader(valid_ds, batch_size=batch_size, shuffle=False,
-                              num_workers=num_workers, pin_memory=True)
+
+    train_loader = make_balanced_loader(
+        train_ds, batch_size=batch_size,
+        num_workers=num_workers, balance=balance_train
+    )
+
+    valid_loader = DataLoader(
+        valid_ds, batch_size=batch_size, shuffle=False,
+        num_workers=num_workers, pin_memory=True
+    )
+
     return train_loader, valid_loader, meta
+
 
 
 if __name__ == "__main__":
@@ -231,12 +263,13 @@ if __name__ == "__main__":
     ap.add_argument("--workers", type=int, default=4)
     ap.add_argument("--rgb", action="store_true", help="Use RGB pipeline (default grayscale)")
     ap.add_argument("--no_balance", action="store_true", help="Disable balanced sampler for train")
+    ap.add_argument("--npy_dir", type=str, help="Directory chứa vector .npy")
     args = ap.parse_args()
 
     train_loader, valid_loader, meta = build_loaders_from_splits(
         args.train_csv, args.valid_csv, args.images_dir,
         batch_size=args.batch_size, num_workers=args.workers,
-        grayscale=not args.rgb, balance_train=not args.no_balance
+        grayscale=not args.rgb, balance_train=not args.no_balance, npy_dir=args.npy_dir
     )
     print("Classes:", meta["class_names"])
     xb, yb = next(iter(train_loader))
