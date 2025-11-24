@@ -292,8 +292,8 @@ def run_eval(cfg: Config):
 
 # -------------------- Run --------------------
 if __name__ == "__main__":
-    model_list = ["resnet","efficientnet", "densenet", "vision_transformer", "siglipv2", "radiov3"]
-
+    # model_list = ["resnet","efficientnet", "densenet", "vision_transformer", "siglipv2", "radiov3"]
+    model_list = ["dinov3"]
     for model_name in model_list:
         print(f"\n=== Evaluating model: {model_name} ===\n")
 
