@@ -359,7 +359,7 @@ if __name__ == "__main__":
             balance_sampler=False,
             use_cosine=True,
             model_name=model_name,
-            use_vector= True
+            use_vector= False
         )
 
         main(cfg)
