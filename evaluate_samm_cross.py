@@ -298,9 +298,9 @@ if __name__ == "__main__":
         print(f"\n=== Evaluating model: {model_name} ===\n")
 
         cfg = Config(
-            valid_csv= "data_csv/label_casme_goc_full.csv",
-            images_dir="./media/CASMEV2/dynamic_images",
-            npy_test_dir="SMIRK_vector/CASME_SMIRK_gaussian",
+            valid_csv= "data_csv/label_sam_goc_full.csv",
+            images_dir="./media/SAMM/dynamic_images",
+            npy_test_dir="SMIRK_vector/SAMM_SMIRK_gaussian",
             checkpoint=f"./artifacts/learnNetmodels/checkpoints/{model_name}/best_last.pth",
             outdir=f"./artifacts/learnNetmodels/eval/{model_name}/",
             grayscale=False,      # RGB default

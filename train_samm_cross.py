@@ -338,14 +338,14 @@ if __name__ == "__main__":
         print(f"\n=== Training model: {model_name} ===\n")
 
         cfg = Config(
-            train_csv=str(base_dir / "label_sam_goc_full.csv"),
-            valid_csv=str(base_dir / "label_casme_goc_full.csv"),
-            images_train_dir="./media/SAMM/dynamic_images",
-            images_test_dir="./media/CASMEV2/dynamic_images", 
+            train_csv=str(base_dir / "label_casme_goc_full.csv"),
+            valid_csv=str(base_dir / "label_sam_goc_full.csv"),
+            images_train_dir="./media/CASMEV2/dynamic_images",
+            images_test_dir="./media/SAMM/dynamic_images", 
             outdir=f"./artifacts/learnNetmodels/checkpoints/{model_name}/",
             log_dir=f"./artifacts/learnNetmodels/logs/{model_name}/",
-            npy_train_dir="SMIRK_vector/SAMM_SMIRK_gaussian",
-            npy_test_dir="SMIRK_vector/CASME_SMIRK_gaussian",
+            npy_train_dir="SMIRK_vector/CASME_SMIRK_gaussian",
+            npy_test_dir="SMIRK_vector/SAMM_SMIRK_gaussian",
             grayscale=False,
             input_size=224,
             num_workers=4,
