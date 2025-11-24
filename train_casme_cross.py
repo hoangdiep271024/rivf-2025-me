@@ -22,6 +22,9 @@ class Config:
     valid_csv: str = "./artifacts/casme_split_new/fold_1/valid.csv"
     images_train_dir: str = "/path/to/images"  
     images_test_dir: str = "/path/to/images" 
+    npy_train_dir: str = "./vectors_train"
+    npy_test_dir: str = "./vectors_test"
+
     outdir: str = "./artifacts/learnNetmodels/checkpoints/"
     log_dir: str = "./artifacts/learnNetmodels/logs/"
 
@@ -37,6 +40,7 @@ class Config:
     epochs: int = 100
     seed: int = 42
     model_name: str = "resnet"
+    use_vector: bool = True
 
     # imbalance handling — pick ONE (recommended: weighted loss ON, sampler OFF)
     use_class_weights: bool = False
@@ -150,12 +154,17 @@ def make_loaders_from_datasets(cfg: Config, train_ds, valid_ds, device: torch.de
 def train_one_epoch(model, criterion, optimizer, loader, device):
     model.train()
     run_loss, run_correct, n = 0.0, 0.0, 0
-    for xb, yb in loader:
-        xb = xb.to(device, non_blocking=True)
-        yb = yb.to(device, non_blocking=True)
 
+    for batch in loader:
+        if len(batch) == 3:
+            xb, vb, yb = batch
+            vb = vb.to(device, non_blocking=True)
+            out = model(xb.to(device, non_blocking=True), extra_vec=vb)
+        else:
+            xb, yb = batch
+            out = model(xb.to(device, non_blocking=True))
+        yb = yb.to(device, non_blocking=True)
         optimizer.zero_grad(set_to_none=True)
-        out = model(xb)
         loss = criterion(out, yb)
         loss.backward()
         optimizer.step()
@@ -163,16 +172,25 @@ def train_one_epoch(model, criterion, optimizer, loader, device):
         run_loss += loss.item() * xb.size(0)
         run_correct += (out.argmax(1) == yb).float().sum().item()
         n += xb.size(0)
+
     return run_loss / max(n, 1), run_correct / max(n, 1)
+
 
 @torch.no_grad()
 def evaluate(model, criterion, loader, device):
     model.eval()
     run_loss, run_correct, n = 0.0, 0.0, 0
-    for xb, yb in loader:
-        xb = xb.to(device, non_blocking=True)
+    for batch in loader:
+        if len(batch) == 3:
+            xb, vb, yb = batch
+            xb = xb.to(device, non_blocking=True)
+            vb = vb.to(device, non_blocking=True)
+            out = model(xb, extra_vec=vb)
+        else:
+            xb, yb = batch
+            xb = xb.to(device, non_blocking=True)
+            out = model(xb)
         yb = yb.to(device, non_blocking=True)
-        out = model(xb)
         loss = criterion(out, yb)
         run_loss += loss.item() * xb.size(0)
         run_correct += (out.argmax(1) == yb).float().sum().item()
@@ -237,11 +255,14 @@ def main(cfg: Config):
     train_ds, valid_ds, meta = build_datasets_from_splits(
     train_csv=cfg.train_csv,
     valid_csv=cfg.valid_csv,
+    npy_train_dir=cfg.npy_train_dir,
+    npy_test_dir=cfg.npy_test_dir,
     images_train_dir=cfg.images_train_dir,
     images_test_dir=cfg.images_test_dir,
     grayscale=cfg.grayscale,
     target_size=(cfg.input_size, cfg.input_size),
 )
+
 
     class_names = meta["class_names"]
     num_classes = meta["num_classes"]
@@ -253,11 +274,11 @@ def main(cfg: Config):
 
     # Model / Loss / Optim / Sched
     # model = LEARNet(num_classes=num_classes).to(device)
+    extra_dim = 53 if cfg.use_vector else 0
     model = build_model_by_name(
             cfg.model_name,
             num_classes=num_classes,
-            pretrained=True,
-            extra_dim= 0
+            extra_dim=extra_dim
         ).to(device)
 
     if cfg.use_class_weights:
@@ -296,7 +317,7 @@ def main(cfg: Config):
               f"{time.time()-t0:.1f}s")
 
         # Save best + last
-        if (va_acc >= best_acc) and (epoch > 70):
+        if (va_acc >= best_acc) and (epoch > 20):
             best_acc = va_acc
             torch.save({"model": model.state_dict(),
                     "classes": class_names,
@@ -310,7 +331,8 @@ def main(cfg: Config):
 from pathlib import Path
 
 if __name__ == "__main__":
-    model_list = ["resnet", "efficientnet", "densenet", "vision_transformer", "radiov3", "siglipv2"]
+    # model_list = ["resnet","efficientnet", "densenet", "vision_transformer", "siglipv2", "radiov3"]
+    model_list = ["dinov3"]
     base_dir = Path("./data_csv")
 
     for model_name in model_list:
@@ -320,9 +342,11 @@ if __name__ == "__main__":
             train_csv=str(base_dir / "label_casme_goc_full.csv"),
             valid_csv=str(base_dir / "label_sam_goc_full.csv"),
             images_train_dir="./media/CASMEV2/dynamic_images",
-            images_test_dir="./media/SAMM/dynamic_images",
+            images_test_dir="./media/SAMM/dynamic_images", 
             outdir=f"./artifacts/learnNetmodels/checkpoints/{model_name}/",
             log_dir=f"./artifacts/learnNetmodels/logs/{model_name}/",
+            npy_train_dir="SMIRK_vector/CASME_SMIRK_gaussian",
+            npy_test_dir="SMIRK_vector/SAMM_SMIRK_gaussian",
             grayscale=False,
             input_size=224,
             num_workers=4,
@@ -334,7 +358,8 @@ if __name__ == "__main__":
             use_class_weights=True,
             balance_sampler=False,
             use_cosine=True,
-            model_name=model_name
+            model_name=model_name,
+            use_vector= True
         )
 
         main(cfg)

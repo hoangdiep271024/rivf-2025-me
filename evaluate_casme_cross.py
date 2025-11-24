@@ -15,7 +15,7 @@ from sklearn.metrics import (
     precision_recall_fscore_support,
 )
 
-# We’ll import your dataset + transforms so we can inject the checkpoint's LabelEncoder
+
 from data_cross import CASMECSVDataset, build_transforms
 
 # -------------------- Config --------------------
@@ -25,7 +25,7 @@ class Config:
     valid_csv: str = "./artifacts/casme_split/fold_1/valid.csv"
     images_dir: str = "/path/to/images"
     checkpoint: str = "./artifacts/learnNetmodels/checkpoints/best_0.9123.pth"
-
+    npy_test_dir: str = "TEASER_vector/CASME_TEASER_gaussian"
     # io
     outdir: str = "./artifacts/learnNetmodels/eval_fold_1"
     model_name: str = "resnet"
@@ -38,6 +38,7 @@ class Config:
 
     # reproducibility
     seed: int = 42
+    use_vector: bool = False
 
 
 # -------------------- Deterministic seeding --------------------
@@ -95,6 +96,7 @@ def _build_valid_dataset(cfg: Config, classes_from_ckpt: list) -> CASMECSVDatase
         df=df,
         images_dir=cfg.images_dir,
         label_encoder=le,
+        npy_dir=cfg.npy_test_dir,
         grayscale=cfg.grayscale,
         transform=tf,
         target_size=(cfg.input_size, cfg.input_size),
@@ -195,14 +197,13 @@ def run_eval(cfg: Config):
     if classes is None:
         raise RuntimeError("Checkpoint missing 'classes' list. Re-train and save classes in the state dict.")
     num_classes = len(classes)
-
-    # 2) Build model and load weights
+    extra_dim = 53 if cfg.use_vector else 0
     model = build_model_by_name(
-            cfg.model_name,
-            num_classes=num_classes,
-            pretrained=True,
-            extra_dim= 0
-        ).to(device)
+        cfg.model_name,
+        num_classes=num_classes,
+        pretrained=False,
+        extra_dim=extra_dim
+    ).to(device)
     model.load_state_dict(ckpt["model"], strict=True)
     model.eval()
 
@@ -224,11 +225,20 @@ def run_eval(cfg: Config):
 
     # 4) Inference
     all_logits, all_preds, all_true = [], [], []
-    for xb, yb in valid_loader:
-        xb = xb.to(device, non_blocking=True)
+    for batch in valid_loader:
+        if len(batch) == 3:
+            xb, vb, yb = batch
+            xb = xb.to(device, non_blocking=True)
+            vb = vb.to(device, non_blocking=True)
+            logits = model(xb, extra_vec=vb)
+        else:
+            xb, yb = batch
+            xb = xb.to(device, non_blocking=True)
+            logits = model(xb)
+        
         yb = yb.to(device, non_blocking=True)
-        logits = model(xb)
         preds = logits.argmax(1)
+        
         all_logits.append(logits.cpu())
         all_preds.append(preds.cpu())
         all_true.append(yb.cpu())
@@ -282,14 +292,15 @@ def run_eval(cfg: Config):
 
 # -------------------- Run --------------------
 if __name__ == "__main__":
-    model_list = ["resnet", "efficientnet", "densenet", "vision_transformer", "radiov3", "siglipv2"]
-
+    # model_list = ["resnet","efficientnet", "densenet", "vision_transformer", "siglipv2", "radiov3"]
+    model_list = ["dinov3"]
     for model_name in model_list:
         print(f"\n=== Evaluating model: {model_name} ===\n")
 
         cfg = Config(
-            valid_csv="data_csv/label_sam_goc_full.csv",
+            valid_csv= "data_csv/label_sam_goc_full.csv",
             images_dir="./media/SAMM/dynamic_images",
+            npy_test_dir="SMIRK_vector/SAMM_SMIRK_gaussian",
             checkpoint=f"./artifacts/learnNetmodels/checkpoints/{model_name}/best_last.pth",
             outdir=f"./artifacts/learnNetmodels/eval/{model_name}/",
             grayscale=False,      # RGB default
@@ -297,6 +308,8 @@ if __name__ == "__main__":
             batch_size=32,
             num_workers=4,
             seed=42,
+            use_vector = True,
+            model_name = model_name
         )
 
         run_eval(cfg)
