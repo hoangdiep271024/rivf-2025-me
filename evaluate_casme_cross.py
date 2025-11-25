@@ -300,7 +300,7 @@ if __name__ == "__main__":
         cfg = Config(
             valid_csv= "data_csv/label_sam_goc_full.csv",
             images_dir="./media/SAMM/dynamic_images",
-            npy_test_dir="SMIRK_vector/SAMM_SMIRK_gaussian",
+            npy_test_dir="TEASER_vector/SAMM_TEASER_gaussian",
             checkpoint=f"./artifacts/learnNetmodels/checkpoints/{model_name}/best_last.pth",
             outdir=f"./artifacts/learnNetmodels/eval/{model_name}/",
             grayscale=False,      # RGB default
