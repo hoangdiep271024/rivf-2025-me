@@ -332,7 +332,7 @@ from pathlib import Path
 
 if __name__ == "__main__":
     # model_list = ["resnet","efficientnet", "densenet", "vision_transformer", "siglipv2", "radiov3"]
-    model_list = ["dinov3"]
+    model_list = ["siglipv2", "radiov3"]
     base_dir = Path("./data_csv")
 
     for model_name in model_list:
