@@ -235,7 +235,7 @@ if __name__ == "__main__":
         cfg = Config(
             valid_csv=f"./artifacts/samm_split/fold_{fold}/valid.csv",
             images_dir="./media/SAMM/dynamic_images",
-            checkpoint=f"./artifacts/learnNetmodels/checkpoints/fold_{fold}/best_last.pth",
+            checkpoint=f"./artifacts/learnNetmodels/checkpoints/resnet/fold_{fold}/best_last.pth",
             outdir=f"./artifacts/learnNetmodels/eval_fold_{fold}",
             grayscale=False,      # RGB default
             input_size=224,
