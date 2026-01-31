@@ -12,7 +12,7 @@ class CustomModel(nn.Module):
 
         self.extra_dim = extra_dim
         if extra_dim > 0:
-                self.extra_proj = build_vision_projector(
+            self.extra_proj = build_vision_projector(
                 mm_hidden_size=extra_dim,
                 hidden_size= in_features,
                 projector_type= projector_type,
