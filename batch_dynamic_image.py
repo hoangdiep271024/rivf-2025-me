@@ -44,7 +44,6 @@ def _compute_dynamic_image(frames):
     # ARP coefficients: từ -(T-1) đến (T-1)
     coefficients = np.array([2 * (n + 1) - num_frames - 1 for n in range(num_frames)])
 
-    # Áp dụng trọng số cho từng frame
     x1 = np.expand_dims(frames, axis=0)                     # (1, T, H, W, C)
     x2 = np.reshape(coefficients, (num_frames, 1, 1, 1))    # (T, 1, 1, 1)
     result = x1 * x2                                        # Broadcasting theo trọng số
@@ -70,12 +69,9 @@ if __name__ == "__main__":
     Path(dest_path).mkdir(parents=True, exist_ok=True)
     seq_dir_list = Path(batch_img_seq_dir_path).glob('*')
     seq_dir_list = [str(p.name) for p in seq_dir_list if p.is_dir()]
-    # sort by extract number \d from image name (image_1.jpg -> 1)
     for seq_dir in tqdm(seq_dir_list):
         print("Seq: ", seq_dir)
         img_seq_dir_path = os.path.join(batch_img_seq_dir_path, seq_dir)
-        # use lambda func to extract number from image name
-        # should resize image to (image_size, image_size)
         img_pat_list = Path(img_seq_dir_path).glob('*.jpg')
         img_pat_list = sorted(img_pat_list, key=lambda x: int(x.stem.split('_')[-1]))
         img_pat_list = [str(p) for p in img_pat_list]
