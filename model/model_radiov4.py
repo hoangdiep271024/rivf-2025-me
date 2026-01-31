@@ -21,7 +21,7 @@ class CustomModel(nn.Module):
             #     nn.BatchNorm1d(extra_dim),
             #     nn.ReLU(inplace=True)
             # )
-            self.in_features = in_features + extra_dim
+            self.in_features = in_features * 2
         else:
             self.extra_proj = None
             self.in_features = in_features
