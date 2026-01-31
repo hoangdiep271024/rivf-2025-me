@@ -30,8 +30,7 @@ class CustomModel(nn.Module):
 
     def forward(self, x, extra_vec=None):
         y = torch.randn(1, 3, 224, 224)
-        with torch.no_grad():
-            out = self.model_base(y)
+        out = self.model_base(y)
         print(out[0].shape)
 
         out = self.model_base(x)
