@@ -34,6 +34,7 @@ class CustomModel(nn.Module):
         with torch.no_grad():
             out = self.model_base(y)
         print(out[0].shape)
+        return 0
 
         out = self.model_base(x)
         feat = out[0] if isinstance(out, (tuple, list)) else out  # (B, 2304)
