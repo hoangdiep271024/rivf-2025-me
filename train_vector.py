@@ -236,7 +236,12 @@ def build_model_by_name(name: str, num_classes: int, pretrained: bool = True, ex
         if extra_dim > 0:
             return build_radiov3(num_classes=num_classes, pretrained=pretrained, extra_dim=extra_dim)
         return build_radiov3(num_classes=num_classes, pretrained=pretrained)
-
+    
+    elif name == "radiov4":
+        from model.model_radiov4 import build_model as build_radiov4
+        if extra_dim > 0:
+            return build_radiov4(num_classes=num_classes, pretrained=pretrained, extra_dim=extra_dim)
+        return build_radiov4(num_classes=num_classes, pretrained=pretrained)
     elif name == "dinov3":
         from model.model_dinov3 import build_model as build_dinov3
         if extra_dim > 0:
@@ -331,7 +336,7 @@ def main(cfg: Config):
 
 if __name__ == "__main__":
     # model_list = ["resnet", "efficientnet", "densenet", "vision_transformer", "radiov3", "siglipv2"]
-    model_list = ["dinov3"]
+    model_list = ["radiov4"]
     base_dir = Path("./artifacts/casme_split")
 
     for model in model_list:
