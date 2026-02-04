@@ -30,9 +30,9 @@ class CustomModel(nn.Module):
 
     def forward(self, x, extra_vec=None):
         y = torch.randn(1, 3, 224, 224)  # (B, C, H, W)
-        out = self.model_base(y)
+        with torch.no_grad():
+            out = self.model_base(y)
         print(out[0].shape)
-        break
         out = self.model_base(x)
         feat = out[0] if isinstance(out, (tuple, list)) else out  # (B, 2304)
 
