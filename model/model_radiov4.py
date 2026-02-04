@@ -29,6 +29,10 @@ class CustomModel(nn.Module):
         self.classifier = nn.Linear(self.in_features, num_classes)
 
     def forward(self, x, extra_vec=None):
+        y = torch.randn(1, 3, 224, 224)  # (B, C, H, W)
+        out = self.model_base(y)
+        print(out[0].shape)
+        break
         out = self.model_base(x)
         feat = out[0] if isinstance(out, (tuple, list)) else out  # (B, 2304)
 
